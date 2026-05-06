@@ -1,6 +1,8 @@
 src/__pycache__/*
 .venv/
 
+.data/
+
 # ---- JetBrains .gitignore for PyCharm ----
 .idea/
 # Covers JetBrains IDEs: IntelliJ, GoLand, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider

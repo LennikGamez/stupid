@@ -1,9 +1,13 @@
+# general
+appdirs>=1.4.4
+
 # web requests
 requests>=2.32.5
 beautifulsoup4>=4.14.3
 
 # database
 sqlalchemy>=2.0.49
+alembic>=1.18.4
 
 # securely save passwords
 keyring>=25.7.0
