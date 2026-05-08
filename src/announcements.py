@@ -11,6 +11,6 @@ class Announcement(DataBase):
     content: Mapped[str] = mapped_column()
 
     course_id: Mapped[int] = mapped_column(ForeignKey("course.id"))
-    course: Mapped["Course"] = relationship(back_populates="announcements")
+    course: Mapped["Course"] = relationship(back_populates="announcements") # noqa
 
 
