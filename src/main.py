@@ -32,10 +32,15 @@ print("You are now logged in :)")"""
 
 class PiDuts:
     def __init__(self):
+        # database engine as attribute
         self.engine: Engine
 
     @staticmethod
     def get_db_url():
+        """
+        this static method returns the correct file path for the database.
+        for development use DEBUG=True and the db is saved to /PROJECT_ROOT/.data
+        """
         debug_mode = env.get("DEBUG", default=False)
 
         pd_dir = user_data_dir(appname="pi_duts", appauthor="lennik") if not debug_mode else path.abspath(
@@ -49,6 +54,7 @@ class PiDuts:
 
     @staticmethod
     def parse_cli_args():
+        """this static method parses the given command line arguments and returns a corresponding Namespace object"""
         # main arg parser
         parser = ArgumentParser()
         subparsers = parser.add_subparsers(dest="cmd")
@@ -65,6 +71,7 @@ class PiDuts:
         return parser.parse_args()
 
     def setup_db_and_run_migrations(self):
+        """this static method sets up the database and runs migrations"""
         # get db url
         url_db = self.get_db_url()
 
@@ -72,7 +79,8 @@ class PiDuts:
         alembic_cfg = Config()
         alembic_cfg.set_main_option("sqlalchemy.url", url_db)
         print(path.join(path.dirname(path.realpath(__file__)), "migrations"))
-        alembic_cfg.set_main_option("script_location", path.join(path.dirname(path.realpath(__file__)), "migrations"))
+        alembic_cfg.set_main_option("script_location",
+                                    path.join(path.dirname(path.realpath(__file__)), "migrations"))
 
         logger.info("----- running migrations -----")
         command.upgrade(alembic_cfg, "head")
@@ -81,6 +89,7 @@ class PiDuts:
         self.engine = create_engine(url_db)
 
     def run(self):
+        """this method runs pi_duts"""
         logging.basicConfig(level=logging.INFO)
         self.setup_db_and_run_migrations()
 
