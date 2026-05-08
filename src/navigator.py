@@ -14,6 +14,9 @@ class Navigator:
     def get(self, endpoint):
         return self.session.get(self.base_url + endpoint)
 
+    def get_url(self, url):
+        return self.session.get(url)
+
     def post(self, endpoint, data={}):
         return self.session.post(self.base_url + endpoint, data)
 

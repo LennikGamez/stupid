@@ -21,6 +21,7 @@ class Course(DataBase):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column()
     display_name: Mapped[str] = mapped_column()
+    cid: Mapped[str] = mapped_column()
 
     announcements: Mapped[List["Announcement"]] = relationship(back_populates="course")
     files: Mapped[List["File"]] = relationship(back_populates="course")
