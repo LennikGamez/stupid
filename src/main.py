@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 from sqlalchemy.testing.config import db_url
 
-from models import User
+from users import User
 from navigator import Navigator
 from login import get_tokens_from_login_page, login
 from argparse import ArgumentParser
@@ -41,7 +41,7 @@ class PiDuts:
         this static method returns the correct file path for the database.
         for development use DEBUG=True and the db is saved to /PROJECT_ROOT/.data
         """
-        debug_mode = env.get("DEBUG", default=False)
+        debug_mode = env.get("DEBUG", default=True)
 
         pd_dir = user_data_dir(appname="pi_duts", appauthor="lennik") if not debug_mode else path.abspath(
             path.join(path.dirname(path.realpath(__file__)), pardir, ".data"))
@@ -74,6 +74,8 @@ class PiDuts:
         """this static method sets up the database and runs migrations"""
         # get db url
         url_db = self.get_db_url()
+
+
 
         # run migrations and create db if not exist
         alembic_cfg = Config()

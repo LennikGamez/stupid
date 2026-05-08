@@ -1,11 +1,14 @@
 from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config, create_engine
-from sqlalchemy import pool
-
+from sqlalchemy import  create_engine
 from alembic import context
 
-from models import DataBase
+from database import DataBase
+from files import File
+from announcements import Announcement
+from courses import Course
+from users import User
+
+__all__ = [DataBase, File, Announcement, User, Course]
 
 from main import PiDuts
 
@@ -22,7 +25,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = DataBase.metadata
+target_metadata = [DataBase.metadata]
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
