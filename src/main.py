@@ -1,14 +1,9 @@
-from os.path import join
-
 from alembic import command
 from alembic.config import Config
-from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
-from sqlalchemy.testing.config import db_url
 
 from users import User
 from navigator import Navigator
-from login import get_tokens_from_login_page, login
 from argparse import ArgumentParser
 from os import makedirs, environ as env
 from appdirs import user_data_dir
@@ -19,16 +14,6 @@ import keyring
 import logging
 
 logger = logging.getLogger(__name__)
-
-"""domain = input("Domain: ")
-username = input("Username: ")
-password = input("Password: ")
-
-nav = Navigator(domain)
-security_token, login_ticket = get_tokens_from_login_page(nav)
-res = login(nav, security_token, login_ticket, username, password)
-print(BeautifulSoup(res.content, "html.parser").prettify)
-print("You are now logged in :)")"""
 
 class PiDuts:
     def __init__(self):
@@ -62,6 +47,7 @@ class PiDuts:
         # user parser
         parser_user = subparsers.add_parser("users", help="Get user info")
         parser_user.add_argument("user_cmd", choices=["list", "add", "remove", "change_password"])
+        parser_user.add_argument("--username", "-u", help="Username")
 
         # file parser
         parser_files = subparsers.add_parser("files", help="Get file info")
@@ -88,7 +74,7 @@ class PiDuts:
         command.upgrade(alembic_cfg, "head")
         logger.info("----- finished running migrations -----")
 
-        self.engine = create_engine(url_db)
+        self.engine = create_engine(url_db) # noqa
 
     def run(self):
         """this method runs pi_duts"""
@@ -96,6 +82,8 @@ class PiDuts:
         self.setup_db_and_run_migrations()
 
         cmd = self.parse_cli_args()
+
+        logger.info(f"Got the following command: {cmd}")
 
         if cmd.cmd == "users":
             if cmd.user_cmd == "list":
@@ -106,8 +94,11 @@ class PiDuts:
                     print(u.username)
 
             elif cmd.user_cmd == "add":
-                print("Please enter details for adding user")
-                username = input("Username: ")
+                if cmd.username:
+                    username = cmd.username
+                else:
+                    print("Please enter details for adding user")
+                    username = input("Username: ")
 
                 user = User(username=username.strip(), base_url="", sync_dir="")
 
@@ -120,7 +111,10 @@ class PiDuts:
                         logger.error(e)
 
             elif cmd.user_cmd == "change_password":
-                username = input("Username: ")
+                if cmd.username:
+                    username = cmd.username
+                else:
+                    username = input("Username: ")
                 password = getpass("Password: ",) # echo_char="*" for later python =< 3.14
 
                 with Session(self.engine) as session:
@@ -133,8 +127,26 @@ class PiDuts:
                 if check_pass == password:
                     print("Password changed successfully")
 
+            elif cmd.user_cmd == "remove":
+                pass
+
         elif cmd.cmd == "files":
-            pass
+            if cmd.file_cmd == "sync":
+                if not cmd.username:
+                    logger.error("Please enter username")
+                    exit(1)
+                with Session(self.engine) as session:
+                    user = session.query(User).filter(User.username == cmd.username).first()
+
+                if not user:
+                    logger.error("User not found")
+                    exit(1)
+
+                nav = Navigator(self.engine, user)
+
+
+
+
 
 
 

@@ -1,12 +1,9 @@
 from json import loads
 from bs4 import BeautifulSoup
-from navigator import Navigator
+from sqlalchemy import ForeignKey
 from typing import List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import DataBase
-
-
-COURSE_OVERVIEW_PAGE = "/dispatch.php/my_courses"
 
 class Course(DataBase):
     __tablename__ = 'course'
@@ -18,6 +15,9 @@ class Course(DataBase):
 
     announcements: Mapped[List["Announcement"]] = relationship(back_populates="course") # noqa
     files: Mapped[List["File"]] = relationship(back_populates="course") # noqa
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    user: Mapped["User"] = relationship(back_populates="courses") # noqa
 
 
 def get_list_of_courses(navigator: Navigator):

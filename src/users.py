@@ -8,3 +8,5 @@ class User(DataBase):
     username: Mapped[str] = mapped_column()
     base_url: Mapped[str] = mapped_column()
     sync_dir: Mapped[str] = mapped_column()
+
+    courses: Mapped[List["Course"]] = relationship(back_populates="user") # noqa
