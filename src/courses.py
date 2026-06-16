@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from typing import List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import DataBase
@@ -16,6 +16,11 @@ class Course(DataBase):
 
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     user: Mapped["User"] = relationship(back_populates="courses") # noqa
+
+    # make some combinations of attributes unique
+    __table_args__ = (
+        UniqueConstraint("user_id", "cid"),
+    )
 
 """
 def get_list_of_courses(navigator: Navigator):

@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from os import makedirs, path
 
 from sqlalchemy import Engine
+from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session
 
 from courses import Course
@@ -120,4 +121,40 @@ class Navigator:
             self._clone_folder(url, root_dir=str(self.user.sync_dir))
 
         return False
+
+    def sync_courses(self) -> bool:
+        response = self._get(EP_COURSES)
+        soup = BeautifulSoup(response.content, "html.parser")
+        script_tag = soup.find(id="vue-vuex-store-data-mycourses")
+        if not script_tag:
+            raise Exception("Could not find any course data!")
+        raw_data = json.loads(script_tag.get_text())
+
+        courses = [
+            {
+                "cid": c.id,
+                "name": c.name,
+                "user_id": self.user.id
+                # "number": c.number
+            }
+            for c in list(raw_data["setCourses"].values())
+        ]
+
+        with Session(self.engine) as session:
+            try:
+                sql_stmt = insert(Course).values(courses)
+                sql_stmt.on_conflict_do_nothing(
+                    index_elements=["user_id", "cid"],
+                )
+                session.execute(sql_stmt)
+                session.commit()
+                logger.info(
+                    f"Successfully inserted/updated {len(courses)} courses"
+                )
+
+            except Exception as e:
+                session.rollback()
+                logger.error(e)
+
+
     
