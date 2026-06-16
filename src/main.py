@@ -1,12 +1,14 @@
+import os.path
+
 from alembic import command
 from alembic.config import Config
 from sqlalchemy.orm import Session
-
+from urllib.parse import urlparse
 from users import User
 from navigator import Navigator
 from argparse import ArgumentParser
 from os import makedirs, environ as env
-from appdirs import user_data_dir
+from appdirs import user_data_dir, user_state_dir
 from sqlalchemy import create_engine, text, Engine
 from os import path, getcwd, pardir
 from getpass import getpass
@@ -94,21 +96,51 @@ class PiDuts:
                     print(u.username)
 
             elif cmd.user_cmd == "add":
+                url = input("Enter url to studip instance (e.g. 'https://studip.example.com'): ")
+                url_parsed = urlparse(url)
+
+                # check if valid url was entered
+                if not (url_parsed.scheme and url_parsed.netloc):
+                    raise ValueError("Invalid url")
+
+
                 if cmd.username:
                     username = cmd.username
                 else:
                     print("Please enter details for adding user")
                     username = input("Username: ")
 
-                user = User(username=username.strip(), base_url="", sync_dir="")
+                password = getpass(f"Enter {username}'s password: ", )  # echo_char="*" for later python =< 3.14
+
+                sync_dir = input(f"Enter directory to sync to if empty defaults to: {os.path.join(os.path.expanduser("~"), "PiDuts")}")
+
+                if sync_dir.strip() == "":
+                    sync_dir = path.join(os.path.expanduser("~"), "PiDuts")
+
+
+                if not os.path.exists(os.path.abspath(os.path.join(sync_dir, os.pardir))):
+                    raise ValueError("Directory does not exist")
+
+                os.makedirs(sync_dir, exist_ok=True)
+
+                user = User(username=username.strip(), base_url=url, sync_dir=sync_dir)
 
                 with Session(self.engine) as session:
                     try:
                         session.add(user)
                         session.commit()
+                        session.refresh(user)
+                        logger.info(f"Successfully added user {username}")
                     except Exception as e:
                         session.rollback()
                         logger.error(e)
+
+                keyring.set_password("pi_duts", str(user.id), password)
+                check_pass = keyring.get_password("pi_duts", str(user.id))
+                if check_pass == password:
+                    logger.info("Password set successfully")
+
+
 
             elif cmd.user_cmd == "change_password":
                 if cmd.username:

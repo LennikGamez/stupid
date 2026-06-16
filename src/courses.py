@@ -1,5 +1,3 @@
-from json import loads
-from bs4 import BeautifulSoup
 from sqlalchemy import ForeignKey
 from typing import List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -19,7 +17,7 @@ class Course(DataBase):
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     user: Mapped["User"] = relationship(back_populates="courses") # noqa
 
-
+"""
 def get_list_of_courses(navigator: Navigator):
     response = navigator.get(COURSE_OVERVIEW_PAGE)
     soup = BeautifulSoup(response.content, "html.parser")
@@ -32,3 +30,4 @@ def get_list_of_courses(navigator: Navigator):
         name = course.get("name")
         number = course.get("number")
         yield {"id": id, "name": name, "number": number}
+"""

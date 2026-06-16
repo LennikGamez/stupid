@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import List
 from database import DataBase
 
 class User(DataBase):
