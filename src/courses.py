@@ -8,7 +8,7 @@ class Course(DataBase):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column()
-    display_name: Mapped[str] = mapped_column()
+    display_name: Mapped[str | None] = mapped_column()
     cid: Mapped[str] = mapped_column()
 
     announcements: Mapped[List["Announcement"]] = relationship(back_populates="course") # noqa
@@ -20,19 +20,10 @@ class Course(DataBase):
     # make some combinations of attributes unique
     __table_args__ = (
         UniqueConstraint("user_id", "cid"),
+        UniqueConstraint("user_id", "name"),
+        UniqueConstraint("user_id", "display_name")
     )
 
-"""
-def get_list_of_courses(navigator: Navigator):
-    response = navigator.get(COURSE_OVERVIEW_PAGE)
-    soup = BeautifulSoup(response.content, "html.parser")
-    script_tag = soup.find(id="vue-vuex-store-data-mycourses")
-    if not script_tag:
-        raise Exception("Could not find any course data!")
-    raw_data = loads(script_tag.get_text()) 
-    for course in list(raw_data["setCourses"].values()):
-        id = course.get("id")
-        name = course.get("name")
-        number = course.get("number")
-        yield {"id": id, "name": name, "number": number}
-"""
+    @property
+    def effective_name(self) -> str:
+        return self.display_name or self.name

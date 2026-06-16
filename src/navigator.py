@@ -1,10 +1,12 @@
 import logging
+
 import keyring
 import requests as req
 import json
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from os import makedirs, path
+from datetime import datetime ,timezone
 
 from sqlalchemy import Engine
 from sqlalchemy.dialects.sqlite import insert
@@ -81,13 +83,29 @@ class Navigator:
         if not form:
             raise Exception("Invalid URL!")
         data_files = json.loads(str(form.get("data-files")))
-        data_folders = json.loads(str(form.get("data-folders")))
 
-        for file in data_files:
+        # do DB updates/inserts first, then iterate over updated values. That way files can mark themselves
+        # as downloaded or e.g. update their name if the file exists twice
+        files = [
+            {
+                "stud_id": f.get("id"),
+                "name": f.get("name"),
+                "subdir": sub_dir,
+                "course_id": "TODO",
+                "chdate": datetime.fromtimestamp(f.get("chdate"), tz=timezone.utc)
+            }
+            for f in data_files
+        ]
+
+        # TODO: add db logic like sync_courses
+
+        for file in data_files: # TODO: replace data_files with db files
             # yield file
             self._download_file(file.get("download_url"), root_dir, sub_dir, file.get("name"))
             # here could be a potential DB Update
             print(f"{file.get('name')} has been downloaded!")
+
+        data_folders = json.loads(str(form.get("data-folders")))
         for folder in data_folders:
             # yield {"folder": folder, "files": list(clone_folder(navigator, folder.get("url")))}
             self._clone_folder(folder.get("url"), root_dir, path.join(sub_dir, folder.get("name")))
@@ -155,6 +173,8 @@ class Navigator:
             except Exception as e:
                 session.rollback()
                 logger.error(e)
+
+        return True
 
 
     
