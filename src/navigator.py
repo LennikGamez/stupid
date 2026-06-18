@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from courses import Course
 from users import User
+from files import File
 
 # endpoints
 EP_LOGIN = "/dispatch.php/login"
@@ -65,18 +66,18 @@ class Navigator:
 
         return True, (str(security_token), str(login_ticket))
 
-    def _download_file(self, dl_url:str, root_dir:str, sub_dir:str, file_name:str) -> bool:
-        response = self._get(dl_url, use_base_url=False)
-        directory = path.abspath(path.join(root_dir, sub_dir))
-        if not path.exists(directory):
-            makedirs(directory)
+    def _download_file(self, file: File) -> bool:
+        response = self._get(file.download_url, use_base_url=False)
 
-        with open(path.join(directory, file_name), "wb") as f:
+        if not path.exists(file.file_dir):
+            makedirs(file.file_dir)
+
+        with open(file.file_path, "wb") as f:
             f.write(response.content)
 
         return True
 
-    def _clone_folder(self, url: str, root_dir:str, sub_dir:str="") -> None:
+    def _clone_folder(self, course: type[Course], url: str, root_dir:str, sub_dir:str="") -> None:
         response = self._get(url, use_base_url=False)
         soup = BeautifulSoup(response.content, "html.parser")
         form = soup.find(id="files_table_form")
@@ -91,25 +92,50 @@ class Navigator:
                 "stud_id": f.get("id"),
                 "name": f.get("name"),
                 "subdir": sub_dir,
-                "course_id": "TODO",
-                "chdate": datetime.fromtimestamp(f.get("chdate"), tz=timezone.utc)
+                "course_id": course.id,
+                "chdate": datetime.fromtimestamp(f.get("chdate"), tz=timezone.utc),
+                "download_url": f.get("download_url"),
             }
             for f in data_files
         ]
 
-        # TODO: add db logic like sync_courses
+        with Session(self.engine) as session:
+            try:
+                sql_stmt = insert(File)
+                sql_stmt = (
+                    sql_stmt
+                    .values(files)
+                    .on_conflict_do_update(
+                        index_elements=["course_id", "stud_id"],
+                        set_={
+                            "name": sql_stmt.excluded.name,
+                            "subdir": sql_stmt.excluded.subdir,
+                            "chdate": sql_stmt.excluded.chdate,
+                            "download_url": sql_stmt.excluded.download_url,
+                        }
+                    )
+                    .returning(File)
+                )
 
-        for file in data_files: # TODO: replace data_files with db files
-            # yield file
-            self._download_file(file.get("download_url"), root_dir, sub_dir, file.get("name"))
-            # here could be a potential DB Update
-            print(f"{file.get('name')} has been downloaded!")
+                res = session.execute(sql_stmt)
+
+                res_files = res.scalars().all()
+
+                session.commit()
+
+            except Exception as e:
+                session.rollback()
+                logger.error(e)
+
+
+        for file in res_files:
+            self._download_file(file)
+
+            print(f"{file.name} has been downloaded!")
 
         data_folders = json.loads(str(form.get("data-folders")))
         for folder in data_folders:
-            # yield {"folder": folder, "files": list(clone_folder(navigator, folder.get("url")))}
-            self._clone_folder(folder.get("url"), root_dir, path.join(sub_dir, folder.get("name")))
-            # here could be a potential DB Update
+            self._clone_folder(course, folder.get("url"), root_dir, path.join(sub_dir, folder.get("name")))
 
 
     def session_login(self) -> bool:
@@ -136,7 +162,7 @@ class Navigator:
         # sync every course
         for course in courses:
             url = urljoin(str(self.user.base_url), EP_FILE_DIR_PAGE + course.cid,)
-            self._clone_folder(url, root_dir=str(self.user.sync_dir))
+            self._clone_folder(course, url, root_dir=str(self.user.sync_dir))
 
         return False
 
