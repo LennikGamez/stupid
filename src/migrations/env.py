@@ -10,8 +10,7 @@ from users import User
 
 __all__ = [DataBase, File, Announcement, User, Course]
 
-from main import PiDuts
-
+from constants import get_db_url
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -65,7 +64,7 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    engine = create_engine(PiDuts.get_db_url())
+    engine = create_engine(get_db_url())
     with engine.connect() as connection:
         context.configure(
             connection=connection, target_metadata=target_metadata, render_as_batch=True

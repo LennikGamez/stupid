@@ -7,13 +7,15 @@ from urllib.parse import urlparse
 from users import User
 from navigator import Navigator
 from argparse import ArgumentParser
-from os import makedirs, environ as env
-from appdirs import user_data_dir, user_state_dir
 from sqlalchemy import create_engine, text, Engine
 from os import path, getcwd, pardir
 from getpass import getpass
 import keyring
 import logging
+
+from constants import get_app_dir, get_db_url
+
+from web_session_manager import WebSessionManager
 
 logger = logging.getLogger(__name__)
 
@@ -21,23 +23,6 @@ class PiDuts:
     def __init__(self):
         # database engine as attribute
         self.engine: Engine
-
-    @staticmethod
-    def get_db_url():
-        """
-        this static method returns the correct file path for the database.
-        for development use DEBUG=True and the db is saved to /PROJECT_ROOT/.data
-        """
-        debug_mode = env.get("DEBUG", default=True)
-
-        pd_dir = user_data_dir(appname="pi_duts", appauthor="lennik") if not debug_mode else path.abspath(
-            path.join(path.dirname(path.realpath(__file__)), pardir, ".data"))
-
-        makedirs(pd_dir, exist_ok=True)
-
-        logger.info("Found the following data path: " +  path.join(pd_dir, 'db.sqlite'),)
-
-        return f"sqlite:///{path.join(pd_dir, 'db.sqlite')}"
 
     @staticmethod
     def parse_cli_args():
@@ -61,7 +46,7 @@ class PiDuts:
     def setup_db_and_run_migrations(self):
         """this static method sets up the database and runs migrations"""
         # get db url
-        url_db = self.get_db_url()
+        url_db = get_db_url()
 
 
 
@@ -174,7 +159,9 @@ class PiDuts:
                     logger.error("User not found")
                     exit(1)
 
-                nav = Navigator(self.engine, user)
+                with WebSessionManager(user) as session:
+                    nav = Navigator(self.engine, session, user)
+                    nav.sync_files()
 
 
 
