@@ -20,6 +20,7 @@ class File(DataBase):
 
     chdate: Mapped[datetime] = mapped_column(default=datetime.now())
 
+    downloaded: Mapped[bool] = mapped_column(default=False)
     download_url: Mapped[str | None] = mapped_column()
 
     # make some combinations of attributes unique

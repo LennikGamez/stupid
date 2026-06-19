@@ -19,9 +19,9 @@ class Course(DataBase):
 
     # make some combinations of attributes unique
     __table_args__ = (
-        UniqueConstraint("user_id", "cid"),
-        UniqueConstraint("user_id", "name"),
-        UniqueConstraint("user_id", "display_name")
+        UniqueConstraint("user_id", "cid", name="unique_course_id_cid"),
+        UniqueConstraint("user_id", "name", name="unique_course_id_name"),
+        UniqueConstraint("user_id", "display_name", name="unique_course_id_display_name"),
     )
 
     @property

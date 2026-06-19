@@ -67,15 +67,26 @@ class Navigator:
         return True, (str(security_token), str(login_ticket))
 
     def _download_file(self, file: File) -> bool:
-        response = self._get(file.download_url, use_base_url=False)
+        if not file.downloaded and not path.exists(file.file_path):
+            try:
+                response = self._get(file.download_url, use_base_url=False)
 
-        if not path.exists(file.file_dir):
-            makedirs(file.file_dir)
+                if not path.exists(file.file_dir):
+                    makedirs(file.file_dir)
 
-        with open(file.file_path, "wb") as f:
-            f.write(response.content)
+                with open(file.file_path, "wb") as f:
+                    f.write(response.content)
 
-        return True
+                with Session(self.engine) as session:
+                    file.downloaded = True
+                    session.commit()
+
+                return True
+
+            except Exception as e:
+                logger.error(e)
+
+        return False
 
     def _clone_folder(self, course: type[Course], url: str, root_dir:str, sub_dir:str="") -> None:
         response = self._get(url, use_base_url=False)
