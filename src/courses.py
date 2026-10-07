@@ -9,7 +9,7 @@ class Course(DataBase):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column()
     display_name: Mapped[str | None] = mapped_column()
-    cid: Mapped[str] = mapped_column()
+    stud_id: Mapped[str] = mapped_column()
 
     announcements: Mapped[List["Announcement"]] = relationship(back_populates="course") # noqa
     files: Mapped[List["File"]] = relationship(back_populates="course") # noqa
@@ -19,7 +19,7 @@ class Course(DataBase):
 
     # make some combinations of attributes unique
     __table_args__ = (
-        UniqueConstraint("user_id", "cid", name="unique_course_id_cid"),
+        UniqueConstraint("user_id", "stud_id", name="unique_course_id_stud_id"),
         UniqueConstraint("user_id", "name", name="unique_course_id_name"),
         UniqueConstraint("user_id", "display_name", name="unique_course_id_display_name"),
     )

@@ -6,6 +6,8 @@ class User(DataBase):
     __tablename__ = 'user'
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    stud_id: Mapped[str | None] = mapped_column()
+
     username: Mapped[str] = mapped_column()
     base_url: Mapped[str] = mapped_column()
     sync_dir: Mapped[str] = mapped_column(unique=True)

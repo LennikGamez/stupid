@@ -117,7 +117,7 @@ class Navigator:
 
         # sync every course
         for course in courses:
-            url = urljoin(str(self.user.base_url), EP_FILE_DIR_PAGE + course.cid,)
+            url = urljoin(str(self.user.base_url), EP_FILE_DIR_PAGE + course.stud_id,)
             self._clone_folder(course, url, root_dir=str(self.user.sync_dir))
 
         return False
@@ -132,7 +132,7 @@ class Navigator:
 
         courses = [
             {
-                "cid": c.get("id"),
+                "stud_id": c.get("id"),
                 "name": c.get("name"),
                 "user_id": self.user.id
                 # "number": c.number
@@ -143,7 +143,7 @@ class Navigator:
         with dbSession(self.engine) as session:
             try:
                 sql_stmt = insert(Course).values(courses).on_conflict_do_nothing(
-                    index_elements=["user_id", "cid"],
+                    index_elements=["user_id", "stud_id"],
                 )
                 session.execute(sql_stmt)
                 session.commit()
