@@ -33,6 +33,8 @@ class WebSessionManager:
         if path.exists(self.session_file):
             with open(self.session_file, "rb") as f:
                 self.session.cookies.update(pickle.load(f))
+        if not self.check_if_logged_in():
+            self.session_login()
 
         return self
 
@@ -56,7 +58,6 @@ class WebSessionManager:
         if not form:
             logger.error("Could not find the login-form!")
             return False, ("", "")
-
         security_token_input = form.find(attrs={"name": "security_token"})
         if not security_token_input:
             logger.error("Security Token was not found!")
@@ -93,5 +94,13 @@ class WebSessionManager:
 
 
         return True
+
+    def check_if_logged_in(self):
+        response = self.session.get(self.user.base_url + "/dispatch.php/start/index")
+        soup = BeautifulSoup(response.text, "html.parser")
+        title_handle = soup.find("title")
+        if not title_handle:
+            raise Exception("No title Tag found what is going on ")
+        return not "Login" in title_handle.text
 
 

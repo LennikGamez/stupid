@@ -2,8 +2,9 @@ import os.path
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as dbSession
 from urllib.parse import urlparse
+from courses import Course
 from users import User
 from navigator import Navigator
 from argparse import ArgumentParser
@@ -41,6 +42,11 @@ class PiDuts:
         parser_files.add_argument("file_cmd", choices=[None, "sync"], help="choose what to do with files")
         parser_files.add_argument("--username", "-u", help="Username", required=True)
 
+        # course parser
+        parser_course = subparsers.add_parser("courses", help="Manage your courses")
+        parser_course.add_argument("course_cmd", choices=["sync", "list"])
+        parser_course.add_argument("--username", "-u", help="username", required=True)
+
         return parser.parse_args()
 
     def setup_db_and_run_migrations(self):
@@ -74,7 +80,7 @@ class PiDuts:
 
         if cmd.cmd == "users":
             if cmd.user_cmd == "list":
-                with Session(self.engine) as session:
+                with dbSession(self.engine) as session:
                     users = session.query(User).all()
 
                 for u in users:
@@ -110,7 +116,7 @@ class PiDuts:
 
                 user = User(username=username.strip(), base_url=url, sync_dir=sync_dir)
 
-                with Session(self.engine) as session:
+                with dbSession(self.engine) as session:
                     try:
                         session.add(user)
                         session.commit()
@@ -134,10 +140,13 @@ class PiDuts:
                     username = input("Username: ")
                 password = getpass("Password: ",) # echo_char="*" for later python =< 3.14
 
-                with Session(self.engine) as session:
+                with dbSession(self.engine) as session:
                     user = session.query(User).filter(User.username == username).first()
                     if user:
                         user_id = user.id
+                    else:
+                        logger.info("user not found!")
+                        exit(1)
 
                 keyring.set_password("pi_duts", str(user_id), password)
                 check_pass = keyring.get_password("pi_duts", str(user_id))
@@ -169,7 +178,7 @@ class PiDuts:
                 if not cmd.username:
                     logger.error("Please enter username")
                     exit(1)
-                with Session(self.engine) as session:
+                with dbSession(self.engine) as session:
                     user = session.query(User).filter(User.username == cmd.username).first()
 
                 if not user:
@@ -181,7 +190,36 @@ class PiDuts:
                     nav.sync_files()
 
 
+        elif cmd.cmd == "courses":
+            if cmd.course_cmd == "list":
+                if not cmd.username:
+                    logger.error("Please enter username")
+                    exit(1)
+                with dbSession(self.engine) as session:
+                    user = session.query(User).filter(User.username == cmd.username).first()
 
+                if not user:
+                    logger.error("User not found")
+                    exit(1)
+
+                with dbSession(self.engine) as session:
+                    courses = session.query(Course).filter(Course.user_id == user.id).all()
+                    for c in courses:
+                        print(f"{c.id}: {c.name}")
+                
+            if cmd.course_cmd == "sync":
+                if not cmd.username:
+                    logger.error("Please enter username")
+                    exit(1)
+                with dbSession(self.engine) as session:
+                    user = session.query(User).filter(User.username == cmd.username).first()
+
+                if not user:
+                    logger.error("User not found")
+                    exit(1)
+                with WebSessionManager(user) as session:
+                    nav = Navigator(self.engine, session, user)
+                    nav.sync_courses()
 
 
 

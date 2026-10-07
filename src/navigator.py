@@ -8,7 +8,7 @@ from datetime import datetime ,timezone
 
 from sqlalchemy import Engine
 from sqlalchemy.dialects.sqlite import insert
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as dbSession
 
 from courses import Course
 from users import User
@@ -37,7 +37,7 @@ class Navigator:
                 with open(file.file_path, "wb") as f:
                     f.write(response.content)
 
-                with Session(self.engine) as session:
+                with dbSession(self.engine) as session:
                     file.downloaded = True
                     session.commit()
 
@@ -70,7 +70,7 @@ class Navigator:
             for f in data_files
         ]
 
-        with Session(self.engine) as session:
+        with dbSession(self.engine) as session:
             try:
                 sql_stmt = insert(File)
                 sql_stmt = (
@@ -99,10 +99,10 @@ class Navigator:
                 logger.error(e)
 
 
-        for file in res_files:
-            self._download_file(file)
+            for file in res_files:
+                self._download_file(file)
 
-            print(f"{file.name} has been downloaded!")
+                print(f"{file.name} has been downloaded!")
 
         data_folders = json.loads(str(form.get("data-folders")))
         for folder in data_folders:
@@ -111,8 +111,9 @@ class Navigator:
 
     def sync_files(self) -> bool:
         # get relevant courses
-        with Session(self.engine) as session:
+        with dbSession(self.engine) as session:
             courses = session.query(Course).filter(Course.user_id == self.user.id).all()
+        print(courses)
 
         # sync every course
         for course in courses:
@@ -131,18 +132,17 @@ class Navigator:
 
         courses = [
             {
-                "cid": c.id,
-                "name": c.name,
+                "cid": c.get("id"),
+                "name": c.get("name"),
                 "user_id": self.user.id
                 # "number": c.number
             }
             for c in list(raw_data["setCourses"].values())
         ]
 
-        with Session(self.engine) as session:
+        with dbSession(self.engine) as session:
             try:
-                sql_stmt = insert(Course).values(courses)
-                sql_stmt.on_conflict_do_nothing(
+                sql_stmt = insert(Course).values(courses).on_conflict_do_nothing(
                     index_elements=["user_id", "cid"],
                 )
                 session.execute(sql_stmt)
