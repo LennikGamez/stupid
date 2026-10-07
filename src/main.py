@@ -33,7 +33,7 @@ class PiDuts:
 
         # user parser
         parser_user = subparsers.add_parser("users", help="Get user info")
-        parser_user.add_argument("user_cmd", choices=["list", "add", "remove", "change_password"])
+        parser_user.add_argument("user_cmd", choices=["list", "add", "remove", "change_password", "check_login"])
         parser_user.add_argument("--username", "-u", help="Username")
 
         # file parser
@@ -146,6 +146,23 @@ class PiDuts:
 
             elif cmd.user_cmd == "remove":
                 pass
+
+            elif cmd.user_cmd == "check_login":
+                if not cmd.username:
+                    logger.error("Please enter username")
+                    exit(1)
+
+                with Session(self.engine) as session:
+                    user = session.query(User).filter(User.username == cmd.username).first()
+
+                if not user:
+                    logger.error("User not found")
+                    exit(1)
+
+                with WebSessionManager(user) as session:
+                    session._show_cookies()
+                    #nav = Navigator(self.engine, session, user)
+
 
         elif cmd.cmd == "files":
             if cmd.file_cmd == "sync":

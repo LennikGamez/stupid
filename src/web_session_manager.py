@@ -21,6 +21,14 @@ class WebSessionManager:
         self.ensure_login = ensure_login
 
 
+    def _save_cookies(self):
+        with open(self.session_file, "wb") as f:
+            pickle.dump(self.session.cookies, f)
+
+    def _show_cookies(self):
+        for c in self.session.cookies:
+            print(f"{c.name}: {c.value}, {c.expires}")
+
     def __enter__(self):
         if path.exists(self.session_file):
             with open(self.session_file, "rb") as f:
@@ -29,8 +37,7 @@ class WebSessionManager:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        with open(self.session_file, "wb") as f:
-            pickle.dump(self.session.cookies, f)
+        self._save_cookies()
 
     def get(self, endpoint, use_base_url = True, base_url: str="",) -> r.Response:
         if base_url == "": base_url = self.user.base_url
@@ -64,6 +71,7 @@ class WebSessionManager:
 
         return True, (str(security_token), str(login_ticket))
 
+
     def session_login(self) -> bool:
         tk_success, (tk_sec, tk_login) = self._extract_sec_token_from_loginpage()
         if not tk_success: return False
@@ -77,7 +85,12 @@ class WebSessionManager:
              "Login": ""
         })
 
+        logger.info(f"Login response: {res}")
+
         # save session cookies
+        # TODO: idk ob die von requests automatisch in self.session.cookies landen, falls ja:
+        self._save_cookies()
+
 
         return True
 
