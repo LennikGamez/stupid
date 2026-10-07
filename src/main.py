@@ -119,7 +119,7 @@ class PiDuts:
 
                 # login and get stud_id for user
                 with WebSessionManager(user) as session:
-                    nav = ApiNavigator(session)
+                    nav = ApiNavigator(session, self.engine)
                     user.stud_id = nav.get_user_info_via_session_token()
 
                 with dbSession(self.engine) as session:
