@@ -224,8 +224,8 @@ class PiDuts:
                     logger.error("User not found")
                     exit(1)
                 with WebSessionManager(user) as session:
-                    nav = Navigator(self.engine, session, user)
-                    nav.sync_courses()
+                    nav = ApiNavigator(session, self.engine)
+                    nav.get_course_list_for_user()
 
 
 
