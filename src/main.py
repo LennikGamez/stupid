@@ -192,7 +192,7 @@ class PiDuts:
                     exit(1)
 
                 with WebSessionManager(user) as session:
-                    nav = Navigator(self.engine, session, user)
+                    nav = ApiNavigator(session, self.engine)
                     nav.sync_files()
 
 
