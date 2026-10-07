@@ -19,7 +19,7 @@ from constants import *
 logger = logging.getLogger(__name__)
 
 class Navigator:
-    def __init__(self, db_engine: Engine, wsm: WebSessionManager, user: type[User]):
+    def __init__(self, db_engine: Engine, wsm: WebSessionManager, user: User):
         """The Navigator class takes a base_url in the constructor which is just the domain of your University's page"""
         self.engine = db_engine
         self.user = user

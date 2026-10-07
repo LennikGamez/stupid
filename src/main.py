@@ -161,7 +161,7 @@ class PiDuts:
                     logger.error("Please enter username")
                     exit(1)
 
-                with Session(self.engine) as session:
+                with dbSession(self.engine) as session:
                     user = session.query(User).filter(User.username == cmd.username).first()
 
                 if not user:

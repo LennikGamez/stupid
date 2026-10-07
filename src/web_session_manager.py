@@ -13,7 +13,7 @@ from users import User
 logger = getLogger(__name__)
 
 class WebSessionManager:
-    def __init__(self, user: type[User], ensure_login: bool=True):
+    def __init__(self, user: User, ensure_login: bool=True):
         self.user = user
         self.app_dir = get_app_dir()
         self.session = r.session()
