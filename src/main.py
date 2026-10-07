@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 from courses import Course
 from users import User
 from navigator import Navigator
+from api_navigator import ApiNavigator
 from argparse import ArgumentParser
 from sqlalchemy import create_engine, text, Engine
 from os import path, getcwd, pardir
@@ -115,6 +116,11 @@ class PiDuts:
                 os.makedirs(sync_dir, exist_ok=True)
 
                 user = User(username=username.strip(), base_url=url, sync_dir=sync_dir)
+
+                # login and get stud_id for user
+                with WebSessionManager(user) as session:
+                    nav = ApiNavigator(session)
+                    user.stud_id = nav.get_user_info_via_session_token()
 
                 with dbSession(self.engine) as session:
                     try:
