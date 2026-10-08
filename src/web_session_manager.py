@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import requests as r
 import pickle
 import keyring
+from api_navigator import USER_INFO
 
 from constants import *
 
@@ -29,10 +30,14 @@ class WebSessionManager:
         for c in self.session.cookies:
             print(f"{c.name}: {c.value}, {c.expires}")
 
-    def __enter__(self):
+    def _load_cookies(self):
         if path.exists(self.session_file):
             with open(self.session_file, "rb") as f:
                 self.session.cookies.update(pickle.load(f))
+
+
+    def __enter__(self):
+        self._load_cookies()
         if not self.check_if_logged_in():
             self.session_login()
 
@@ -49,7 +54,7 @@ class WebSessionManager:
     def post(self, endpoint, data=None) -> r.Response:
         return self.session.post(urljoin(str(self.user.base_url), endpoint), data)
 
-    def _extract_sec_token_from_loginpage(self) -> tuple[bool, tuple[str, str] | None]:
+    def _extract_sec_token_from_loginpage(self) -> tuple[bool, tuple[str, str]]:
         res = self.get(EP_LOGIN).content
         bs = BeautifulSoup(res, "html.parser")
 
@@ -74,7 +79,9 @@ class WebSessionManager:
 
 
     def session_login(self) -> bool:
-        tk_success, (tk_sec, tk_login) = self._extract_sec_token_from_loginpage()
+        
+        tk_success, (tk_sec, tk_login) = tk_success, (tk_sec, tk_login) = self._extract_sec_token_from_loginpage()
+
         if not tk_success: return False
 
         res = self.post(EP_LOGIN, data={
@@ -96,11 +103,6 @@ class WebSessionManager:
         return True
 
     def check_if_logged_in(self):
-        response = self.session.get(self.user.base_url + "/dispatch.php/start/index")
-        soup = BeautifulSoup(response.text, "html.parser")
-        title_handle = soup.find("title")
-        if not title_handle:
-            raise Exception("No title Tag found what is going on ")
-        return not "Login" in title_handle.text
-
+        response = self.session.get(urljoin(self.user.base_url, USER_INFO))
+        return not response.status_code == 401
 
