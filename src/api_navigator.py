@@ -85,7 +85,7 @@ class ApiNavigator:
         for folder in folders:
             name = folder.get("attributes").get("name")
             folder_id = folder.get("id")
-            self._clone_folder(course, f"/jsonapi.php/v1/folders/{folder_id}", root_dir=str(self.wsm.user.sync_dir), sub_dir=path.join(sub_dir, name))
+            self._clone_folder(course, FOLDER_LIST(folder_id), root_dir=str(self.wsm.user.sync_dir), sub_dir=path.join(sub_dir, name))
 
         # do DB updates/inserts first, then iterate over updated values. That way files can mark themselves
         # as downloaded or e.g. update their name if the file exists twice
@@ -146,10 +146,10 @@ class ApiNavigator:
 
         # sync every course
         for course in courses:
-            root_folder_res = self.wsm.get(f"{API_VERSION}/courses/{course.stud_id}/folders")
+            root_folder_res = self.wsm.get(ROOT_FOLDER_FOLDERS(course.stud_id))
             if root_folder_res.json().get("data") is None:
                 print(f"{course.name} has no file system!")
                 continue
             root_folder_id = root_folder_res.json().get("data")[0].get("id")
 
-            self._clone_folder(course, f"/jsonapi.php/v1/folders/{root_folder_id}", root_dir=str(self.wsm.user.sync_dir), )
+            self._clone_folder(course, FOLDER_LIST(root_folder_id), root_dir=str(self.wsm.user.sync_dir), )

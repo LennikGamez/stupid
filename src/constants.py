@@ -14,8 +14,10 @@ EP_FILE_DIR_PAGE = "/dispatch.php/course/files?cid="
 EP_FILE_FLAT_PAGE = "/dispatch.php/course/files/flat?cid="
 EP_DOWNLOAD_NEWEST_FILES = "/dispatch.php/course/files/newest_files?cid="
 
-API_VERSION = "/jsonapi.php/v1/"
+API_VERSION = "/jsonapi.php/v1"
 USER_INFO = path.join(API_VERSION, "users/me")
+ROOT_FOLDER_FOLDERS = lambda course_id: path.join(API_VERSION, f"courses/{course_id}/folders")
+FOLDER_LIST = lambda folder_id: path.join(API_VERSION, f"folders/{folder_id}")
 COURSE_LIST = lambda user_id: path.join(API_VERSION, f"users/{user_id}/courses")
 
 def get_app_dir():
