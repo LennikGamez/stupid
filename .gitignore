@@ -1,4 +1,6 @@
 src/__pycache__/*
+src/migrations/__pycache__/
+src/migrations/versions/__pycache__/
 .venv/
 
 .data/
