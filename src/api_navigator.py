@@ -4,6 +4,7 @@ from sqlalchemy import Engine
 from sqlalchemy.dialects.sqlite import insert
 from os import path, makedirs
 from datetime import datetime ,timezone
+from urllib.parse import urljoin
 
 from courses import Course
 from files import File
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 API_VERSION = "/jsonapi.php/v1"
 USER_INFO = API_VERSION + "/users/me"
-course_list = API_VERSION + "/users/<user-id>/courses"
+COURSE_LIST = lambda user_id: urljoin(API_VERSION, f"/users/{user_id}/courses")
 class ApiNavigator:
     # Endpoints
     def __init__(self, wsm: WebSessionManager, engine: Engine ):
@@ -30,8 +31,7 @@ class ApiNavigator:
     def get_course_list_for_user(self):
         if self.wsm.user.stud_id is None:
             raise Exception("stud ID missing")
-        COURSE_LIST = course_list.replace("<user-id>", self.wsm.user.stud_id)
-        res = self.wsm.get(COURSE_LIST)
+        res = self.wsm.get(COURSE_LIST(self.wsm.user.stud_id))
         json_data = res.json().get("data")
 
 
