@@ -1,61 +1,24 @@
-import os.path
+import logging
+from os import path
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy.orm import Session as dbSession
-from urllib.parse import urlparse
-from courses import Course
-from users import User
-from navigator import Navigator
-from api_navigator import ApiNavigator
-from argparse import ArgumentParser
-from sqlalchemy import create_engine, text, Engine
-from os import path, getcwd, pardir
-from getpass import getpass
-import keyring
-import logging
+from sqlalchemy import create_engine, Engine
 
-from constants import get_app_dir, get_db_url
-
-from web_session_manager import WebSessionManager
+from cli import CLI
+from constants import get_db_url
 
 logger = logging.getLogger(__name__)
 
-class PiDuts:
+class Stupid:
     def __init__(self):
         # database engine as attribute
         self.engine: Engine
-
-    @staticmethod
-    def parse_cli_args():
-        """this static method parses the given command line arguments and returns a corresponding Namespace object"""
-        # main arg parser
-        parser = ArgumentParser()
-        subparsers = parser.add_subparsers(dest="cmd")
-
-        # user parser
-        parser_user = subparsers.add_parser("users", help="Get user info")
-        parser_user.add_argument("user_cmd", choices=["list", "add", "remove", "change_password", "check_login"])
-        parser_user.add_argument("--username", "-u", help="Username")
-
-        # file parser
-        parser_files = subparsers.add_parser("files", help="Get file info")
-        parser_files.add_argument("file_cmd", choices=[None, "sync"], help="choose what to do with files")
-        parser_files.add_argument("--username", "-u", help="Username", required=True)
-
-        # course parser
-        parser_course = subparsers.add_parser("courses", help="Manage your courses")
-        parser_course.add_argument("course_cmd", choices=["sync", "list"])
-        parser_course.add_argument("--username", "-u", help="username", required=True)
-
-        return parser.parse_args()
 
     def setup_db_and_run_migrations(self):
         """this static method sets up the database and runs migrations"""
         # get db url
         url_db = get_db_url()
-
-
 
         # run migrations and create db if not exist
         alembic_cfg = Config()
@@ -71,174 +34,18 @@ class PiDuts:
         self.engine = create_engine(url_db) # noqa
 
     def run(self):
-        """this method runs pi_duts"""
+        """this method runs stupid"""
         logging.basicConfig(level=logging.INFO)
         self.setup_db_and_run_migrations()
 
-        cmd = self.parse_cli_args()
+        cmd = CLI.parse_args()
 
         logger.info(f"Got the following command: {cmd}")
 
-        if cmd.cmd == "users":
-            if cmd.user_cmd == "list":
-                with dbSession(self.engine) as session:
-                    users = session.query(User).all()
-
-                for u in users:
-                    print(u.username)
-
-            elif cmd.user_cmd == "add":
-                url = input("Enter url to studip instance (e.g. 'https://studip.example.com'): ")
-                url_parsed = urlparse(url)
-
-                # check if valid url was entered
-                if not (url_parsed.scheme and url_parsed.netloc):
-                    raise ValueError("Invalid url")
-
-
-                if cmd.username:
-                    username = cmd.username
-                else:
-                    print("Please enter details for adding user")
-                    username = input("Username: ")
-
-                password = getpass(f"Enter {username}'s password: ", )  # echo_char="*" for later python =< 3.14
-
-                sync_dir = input(f"Enter directory to sync to if empty defaults to: {os.path.join(os.path.expanduser("~"), "PiDuts")}")
-
-                if sync_dir.strip() == "":
-                    sync_dir = path.join(os.path.expanduser("~"), "PiDuts")
-
-
-                if not os.path.exists(os.path.abspath(os.path.join(sync_dir, os.pardir))):
-                    raise ValueError("Directory does not exist")
-
-                os.makedirs(sync_dir, exist_ok=True)
-
-                user = User(username=username.strip(), base_url=url, sync_dir=sync_dir)
-
-
-                with dbSession(self.engine) as session:
-                    try:
-                        session.add(user)
-                        session.commit()
-                        session.refresh(user)
-                        logger.info(f"Successfully added user {username}")
-                    except Exception as e:
-                        session.rollback()
-                        logger.error(e)
-
-                keyring.set_password("pi_duts", str(user.id), password)
-                check_pass = keyring.get_password("pi_duts", str(user.id))
-                if check_pass == password:
-                    logger.info("Password set successfully")
-
-                # login and get stud_id for user
-                with WebSessionManager(user) as session:
-                    nav = ApiNavigator(session, self.engine)
-                    user.stud_id = nav.get_user_info_via_session_token()
-
-                with dbSession(self.engine) as session:
-                    try:
-                        session.add(user)
-                        session.commit()
-                        session.refresh(user)
-                        logger.info(f"Successfully added user {username}")
-                    except Exception as e:
-                        session.rollback()
-                        logger.error(e)
-
-
-            elif cmd.user_cmd == "change_password":
-                if cmd.username:
-                    username = cmd.username
-                else:
-                    username = input("Username: ")
-                password = getpass("Password: ",) # echo_char="*" for later python =< 3.14
-
-                with dbSession(self.engine) as session:
-                    user = session.query(User).filter(User.username == username).first()
-                    if user:
-                        user_id = user.id
-                    else:
-                        logger.info("user not found!")
-                        exit(1)
-
-                keyring.set_password("pi_duts", str(user_id), password)
-                check_pass = keyring.get_password("pi_duts", str(user_id))
-                if check_pass == password:
-                    print("Password changed successfully")
-
-            elif cmd.user_cmd == "remove":
-                pass
-
-            elif cmd.user_cmd == "check_login":
-                if not cmd.username:
-                    logger.error("Please enter username")
-                    exit(1)
-
-                with dbSession(self.engine) as session:
-                    user = session.query(User).filter(User.username == cmd.username).first()
-
-                if not user:
-                    logger.error("User not found")
-                    exit(1)
-
-                with WebSessionManager(user) as session:
-                    session._show_cookies()
-                    #nav = Navigator(self.engine, session, user)
-
-
-        elif cmd.cmd == "files":
-            if cmd.file_cmd == "sync":
-                if not cmd.username:
-                    logger.error("Please enter username")
-                    exit(1)
-                with dbSession(self.engine) as session:
-                    user = session.query(User).filter(User.username == cmd.username).first()
-
-                if not user:
-                    logger.error("User not found")
-                    exit(1)
-
-                with WebSessionManager(user) as session:
-                    nav = ApiNavigator(session, self.engine)
-                    nav.sync_files()
-
-
-        elif cmd.cmd == "courses":
-            if cmd.course_cmd == "list":
-                if not cmd.username:
-                    logger.error("Please enter username")
-                    exit(1)
-                with dbSession(self.engine) as session:
-                    user = session.query(User).filter(User.username == cmd.username).first()
-
-                if not user:
-                    logger.error("User not found")
-                    exit(1)
-
-                with dbSession(self.engine) as session:
-                    courses = session.query(Course).filter(Course.user_id == user.id).all()
-                    for c in courses:
-                        print(f"{c.id}: {c.name}")
-                
-            if cmd.course_cmd == "sync":
-                if not cmd.username:
-                    logger.error("Please enter username")
-                    exit(1)
-                with dbSession(self.engine) as session:
-                    user = session.query(User).filter(User.username == cmd.username).first()
-
-                if not user:
-                    logger.error("User not found")
-                    exit(1)
-                with WebSessionManager(user) as session:
-                    nav = ApiNavigator(session, self.engine)
-                    nav.get_course_list_for_user()
-
+        if not cmd.gui:
+            CLI(self.engine, cmd).run_cli()
 
 
 
 if __name__ == '__main__':
-    PiDuts().run()
+    Stupid().run()
