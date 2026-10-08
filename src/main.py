@@ -117,10 +117,6 @@ class PiDuts:
 
                 user = User(username=username.strip(), base_url=url, sync_dir=sync_dir)
 
-                # login and get stud_id for user
-                with WebSessionManager(user) as session:
-                    nav = ApiNavigator(session, self.engine)
-                    user.stud_id = nav.get_user_info_via_session_token()
 
                 with dbSession(self.engine) as session:
                     try:
@@ -137,6 +133,20 @@ class PiDuts:
                 if check_pass == password:
                     logger.info("Password set successfully")
 
+                # login and get stud_id for user
+                with WebSessionManager(user) as session:
+                    nav = ApiNavigator(session, self.engine)
+                    user.stud_id = nav.get_user_info_via_session_token()
+
+                with dbSession(self.engine) as session:
+                    try:
+                        session.add(user)
+                        session.commit()
+                        session.refresh(user)
+                        logger.info(f"Successfully added user {username}")
+                    except Exception as e:
+                        session.rollback()
+                        logger.error(e)
 
 
             elif cmd.user_cmd == "change_password":

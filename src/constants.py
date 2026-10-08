@@ -14,6 +14,9 @@ EP_FILE_DIR_PAGE = "/dispatch.php/course/files?cid="
 EP_FILE_FLAT_PAGE = "/dispatch.php/course/files/flat?cid="
 EP_DOWNLOAD_NEWEST_FILES = "/dispatch.php/course/files/newest_files?cid="
 
+API_VERSION = "/jsonapi.php/v1/"
+USER_INFO = path.join(API_VERSION, "users/me")
+COURSE_LIST = lambda user_id: path.join(API_VERSION, f"users/{user_id}/courses")
 
 def get_app_dir():
     debug_mode = env.get("DEBUG", default=True)

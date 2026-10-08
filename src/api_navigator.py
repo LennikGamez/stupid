@@ -3,22 +3,17 @@ from sqlalchemy.orm import Session as dbSession
 from sqlalchemy import Engine
 from sqlalchemy.dialects.sqlite import insert
 from os import path, makedirs
-from datetime import datetime ,timezone
-from urllib.parse import urljoin
+from datetime import datetime
 
 from courses import Course
 from files import File
 from web_session_manager import WebSessionManager
+from constants import *
 
 logger = logging.getLogger(__name__)
 
-# Endpoints
 
-API_VERSION = "/jsonapi.php/v1"
-USER_INFO = API_VERSION + "/users/me"
-COURSE_LIST = lambda user_id: urljoin(API_VERSION, f"/users/{user_id}/courses")
 class ApiNavigator:
-    # Endpoints
     def __init__(self, wsm: WebSessionManager, engine: Engine ):
         self.wsm = wsm
         self.engine = engine

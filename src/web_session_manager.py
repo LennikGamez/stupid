@@ -5,8 +5,6 @@ from bs4 import BeautifulSoup
 import requests as r
 import pickle
 import keyring
-from api_navigator import USER_INFO
-
 from constants import *
 
 from users import User
