@@ -6,9 +6,10 @@ from database import DataBase
 from files import File
 from announcements import Announcement
 from courses import Course
+from semesters import Semester
 from users import User
 
-__all__ = [DataBase, File, Announcement, User, Course]
+__all__ = [DataBase, File, Announcement, User, Course, Semester]
 
 from constants import get_db_url
 # this is the Alembic Config object, which provides

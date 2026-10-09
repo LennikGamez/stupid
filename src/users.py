@@ -13,3 +13,4 @@ class User(DataBase):
     sync_dir: Mapped[str] = mapped_column(unique=True)
 
     courses: Mapped[List["Course"]] = relationship(back_populates="user") # noqa
+    semesters: Mapped[List["Semester"]] = relationship(back_populates="user") # noqa
