@@ -1,5 +1,7 @@
 # general
 appdirs>=1.4.4
+tabulate>=0.10.0
+pathvalidate>=3.3.1
 
 # web requests
 requests>=2.32.5

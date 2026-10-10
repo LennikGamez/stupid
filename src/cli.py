@@ -1,12 +1,13 @@
 from argparse import ArgumentParser, Namespace
 from getpass import getpass
 from logging import getLogger
-from os import path, pardir, makedirs
+from os import path, pardir, makedirs, getcwd
 from urllib.parse import urlparse
 
 import keyring
-from sqlalchemy import Engine
+from sqlalchemy import Engine, update, asc
 from sqlalchemy.orm import Session as dbSession
+from tabulate import tabulate
 
 from api_navigator import ApiNavigator
 from courses import Course
@@ -25,24 +26,26 @@ class CLI:
         """this static method parses the given command line arguments and returns a corresponding Namespace object"""
         # main arg parser
         parser = ArgumentParser()
-        # flag for an gui mode in the future
+        # flag for a gui mode in the future
         parser.add_argument("--gui", action="store_true")
+        parser.add_argument("--username", "-u", help="Username")
         subparsers = parser.add_subparsers(dest="cmd")
 
         # user parser
         parser_user = subparsers.add_parser("users", help="Get user info")
-        parser_user.add_argument("user_cmd", choices=["list", "add", "remove", "change_password", "check_login"])
-        parser_user.add_argument("--username", "-u", help="Username")
+        parser_user.add_argument("user_cmd", choices=["list", "add", "remove", "change_password", "check_login", "set_favorite"])
 
         # file parser
         parser_files = subparsers.add_parser("files", help="Get file info")
         parser_files.add_argument("file_cmd", choices=[None, "sync"], help="choose what to do with files")
-        parser_files.add_argument("--username", "-u", help="Username")
+        parser_files.add_argument("--all-courses", "-a", action="store_true", help="sync all courses")
+        parser_files.add_argument("--courses", "-c", help="choose which courses to sync")
+        parser_files.add_argument("--here", action="store_true", help="try to updating files in current directory")
+        parser_files.add_argument("--pre-gen-dirs", action="store_true", help="do not update any files just generate directories")
 
         # course parser
         parser_course = subparsers.add_parser("courses", help="Manage your courses")
         parser_course.add_argument("course_cmd", choices=["sync", "list"])
-        parser_course.add_argument("--username", "-u", help="username")
 
         return parser.parse_args()
 
@@ -52,9 +55,16 @@ class CLI:
             if self.cmd.username:
                 user = session.query(User).filter(User.username == self.cmd.username).first()
             else:
-                logger.info("no user specified - trying to get favorite (first) user")
+                logger.info("no user specified - trying to get favorite user")
+                user = session.query(User).filter(User.is_favorite == True).first()
+                if user:
+                    logger.info("got user: " + str(user.username))
+                    return user
+
+                logger.info("no favorite user set - trying to get first user")
                 user = session.query(User).first()
                 logger.info("got user: " + str(user.username))
+                return user
 
         if not user:
             logger.error("User not found")
@@ -89,7 +99,7 @@ class CLI:
                 password = getpass(f"Enter {username}'s password: ", )  # echo_char="*" for later python =< 3.14
 
                 sync_dir = input(
-                    f"Enter directory to sync to if empty defaults to: {path.join(path.expanduser("~"), "PiDuts")}")
+                    f"Enter directory to sync to if empty defaults to {path.join(path.expanduser("~"), "stupid")}: ")
 
                 if sync_dir.strip() == "":
                     sync_dir = path.join(path.expanduser("~"), "PiDuts")
@@ -165,14 +175,67 @@ class CLI:
                     session._show_cookies()
                     # nav = Navigator(self.engine, session, user)
 
+            elif cmd.user_cmd == "set_favorite":
+                with dbSession(self.engine) as session:
+                    all_users = session.query(User).all()
+                print(tabulate(
+                    [[u.id, u.username, u.base_url, u.is_favorite] for u in all_users],
+                    headers=["ID", "Username", "URL", "Favorite"],
+                    tablefmt="rst"
+                ))
+                user_id = int(input("ID of the user you want to favorite: "))
+
+                with dbSession(self.engine) as session:
+                    session.execute(
+                        update(User),
+                        [{"id": u.id, "is_favorite": False} for u in all_users]
+                    )
+                    session.query(User).filter(User.id == user_id).update({"is_favorite": True})
+
+                    session.commit()
+
 
         elif cmd.cmd == "files":
             if cmd.file_cmd == "sync":
-                user = self.get_user()
+                if cmd.here:
+                    pwd = getcwd()
+                    print(pwd)
+                else:
+                    user = self.get_user()
 
-                with WebSessionManager(user) as session:
-                    nav = ApiNavigator(session, self.engine)
-                    nav.sync_files()
+                    if cmd.all_courses:
+                        with WebSessionManager(user) as session:
+                            nav = ApiNavigator(session, self.engine)
+                            nav.sync_files(pre_gen_dir_no_file_download=cmd.pre_gen_dirs)
+
+                    else:
+                        if cmd.courses:
+                            selected_c_ids = cmd.courses.split(",")
+                        else:
+                            print("Since you have entered any courses you have to select them manually: ")
+                            with dbSession(self.engine) as session:
+                                all_courses = session.query(Course).filter(Course.user_id == user.id).order_by(
+                                    asc(Course.name)).all()
+                                print(tabulate(
+                                    [[c.id, c.effective_name,] for c in all_courses],
+                                    headers=["ID", "Name",],
+                                    tablefmt="rst"
+                                ))
+
+                            selected_c_ids = input("Select comma separated course IDs to sync e.g. '1,4,7': ").split(",")
+
+                        with dbSession(self.engine) as session:
+                            selected_courses = session.query(Course).filter(Course.id.in_(selected_c_ids)).all()
+
+                        with WebSessionManager(user) as session:
+                            nav = ApiNavigator(session, self.engine)
+                            for c in selected_courses:
+                                nav.sync_files_by_course(c, pre_gen_dir_no_file_download=cmd.pre_gen_dirs)
+
+
+
+
+
 
 
         elif cmd.cmd == "courses":
@@ -180,9 +243,12 @@ class CLI:
                 user = self.get_user()
 
                 with dbSession(self.engine) as session:
-                    courses = session.query(Course).filter(Course.user_id == user.id).all()
-                    for c in courses:
-                        print(f"{c.id}: {c.name}")
+                    all_courses = session.query(Course).filter(Course.user_id == user.id).order_by(asc(Course.name)).all()
+                    print(tabulate(
+                        [[c.id, c.effective_name,] for c in all_courses],
+                        headers=["ID", "Name",],
+                        tablefmt="rst"
+                    ))
 
             if cmd.course_cmd == "sync":
                 user = self.get_user()

@@ -56,20 +56,23 @@ class ApiNavigator:
 
         return True
 
-    def _download_file(self, file: File) -> bool:
+    def _download_file(self, file: File, **kwargs) -> bool:
         if not file.downloaded and not path.exists(file.file_path):
             try:
-                response = self.wsm.get(file.download_url)
-
                 if not path.exists(file.file_dir):
                     makedirs(file.file_dir)
 
-                with open(file.file_path, "wb") as f:
-                    f.write(response.content)
+                if not "pre_gen_dir_no_file_download" in kwargs.keys() or not kwargs["pre_gen_dir_no_file_download"]:
 
-                with dbSession(self.engine) as session:
-                    file.downloaded = True
-                    session.commit()
+                    response = self.wsm.get(file.download_url)
+
+
+                    with open(file.file_path, "wb") as f:
+                        f.write(response.content)
+
+                    with dbSession(self.engine) as session:
+                        file.downloaded = True
+                        session.commit()
 
                 return True
 
@@ -78,14 +81,14 @@ class ApiNavigator:
 
         return False
         
-    def _clone_folder(self, course: Course, url: str, root_dir: str, sub_dir: str = ""):
+    def _clone_folder(self, course: Course, url: str, root_dir: str, sub_dir: str = "", **kwargs):
         files_data = self.wsm.get(url + "/file-refs").json().get("data")
         folders = self.wsm.get(url + "/folders").json().get("data")
 
         for folder in folders:
             name = folder.get("attributes").get("name")
             folder_id = folder.get("id")
-            self._clone_folder(course, FOLDER_LIST(folder_id), root_dir=str(self.wsm.user.sync_dir), sub_dir=path.join(sub_dir, name))
+            self._clone_folder(course, FOLDER_LIST(folder_id), root_dir=str(self.wsm.user.sync_dir), sub_dir=path.join(sub_dir, name), **kwargs)
 
         # do DB updates/inserts first, then iterate over updated values. That way files can mark themselves
         # as downloaded or e.g. update their name if the file exists twice
@@ -135,21 +138,24 @@ class ApiNavigator:
 
 
             for file in res_files:
-                self._download_file(file)
+                self._download_file(file, **kwargs)
                 print(f"{file.name} has been downloaded!")
-            
 
-    def sync_files(self):
+    def sync_files_by_course(self, course: Course, **kwargs):
+        root_folder_res = self.wsm.get(ROOT_FOLDER_FOLDERS(course.stud_id))
+        if root_folder_res.json().get("data") is None:
+            print(f"{course.name} has no file system!")
+            logger.info(f"{course.name} has no file system!")
+            return
+        root_folder_id = root_folder_res.json().get("data")[0].get("id")
+
+        self._clone_folder(course, FOLDER_LIST(root_folder_id), root_dir=str(self.wsm.user.sync_dir), **kwargs)
+
+    def sync_files(self, **kwargs):
         # get relevant courses
         with dbSession(self.engine) as session:
             courses = session.query(Course).filter(Course.user_id == self.wsm.user.id).all()
 
         # sync every course
         for course in courses:
-            root_folder_res = self.wsm.get(ROOT_FOLDER_FOLDERS(course.stud_id))
-            if root_folder_res.json().get("data") is None:
-                print(f"{course.name} has no file system!")
-                continue
-            root_folder_id = root_folder_res.json().get("data")[0].get("id")
-
-            self._clone_folder(course, FOLDER_LIST(root_folder_id), root_dir=str(self.wsm.user.sync_dir), )
+            self.sync_files_by_course(course, **kwargs)
