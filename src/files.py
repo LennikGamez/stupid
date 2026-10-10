@@ -1,3 +1,4 @@
+from pathvalidate import sanitize_filename
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,8 +31,8 @@ class File(DataBase):
 
     @property
     def file_dir(self):
-        return path.abspath(path.join(self.course.user.sync_dir, self.course.effective_name, self.subdir))
+        return path.abspath(path.join(self.course.user.sync_dir, sanitize_filename(self.course.effective_name, replacement_text="_"), sanitize_filename(self.subdir, replacement_text="_")))
 
     @property
     def file_path(self):
-        return path.join(str(self.file_dir), self.name)
+        return path.join(str(self.file_dir), sanitize_filename(self.name, replacement_text="_"))
