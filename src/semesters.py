@@ -17,3 +17,5 @@ class Semester(DataBase):
 
     user_id: Mapped[int] = mapped_column(ForeignKey('user.id'))
     user: Mapped["User"] = relationship(back_populates="semesters") # noqa
+
+    courses: Mapped[List["Course"]] = relationship(back_populates="semester") # noqa

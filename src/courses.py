@@ -17,6 +17,9 @@ class Course(DataBase):
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     user: Mapped["User"] = relationship(back_populates="courses") # noqa
 
+    semester_id: Mapped[int | None] = mapped_column(ForeignKey("semester.id"))
+    semester: Mapped[Semester | None] = relationship(back_populates="courses") # noqa
+
     # make some combinations of attributes unique
     __table_args__ = (
         UniqueConstraint("user_id", "stud_id", name="unique_course_id_stud_id"),
