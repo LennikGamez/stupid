@@ -11,6 +11,7 @@ from tabulate import tabulate
 
 from api_navigator import ApiNavigator
 from courses import Course
+from semesters import Semester
 from users import User
 from web_session_manager import WebSessionManager
 
@@ -47,9 +48,15 @@ class CLI:
         parser_course = subparsers.add_parser("courses", help="Manage your courses")
         parser_course.add_argument("course_cmd", choices=["sync", "list"])
 
+        # semester parser
+        parser_semesters = subparsers.add_parser("semesters", help="Manage semesters")
+        parser_semesters.add_argument("semester_cmd", choices=["sync", "list"])
+
+
+
         return parser.parse_args()
 
-    def get_user(self):
+    def get_user(self) -> User:
 
         with dbSession(self.engine) as session:
             if self.cmd.username:
@@ -64,7 +71,6 @@ class CLI:
                 logger.info("no favorite user set - trying to get first user")
                 user = session.query(User).first()
                 logger.info("got user: " + str(user.username))
-                return user
 
         if not user:
             logger.error("User not found")
@@ -256,5 +262,19 @@ class CLI:
                 with WebSessionManager(user) as session:
                     nav = ApiNavigator(session, self.engine)
                     nav.get_course_list_for_user()
+
+        elif cmd.cmd == "semesters":
+            if cmd.semester_cmd == "list":
+                user = self.get_user()
+                with dbSession(self.engine) as session:
+                    semes = session.query(Semester).filter(Semester.user_id == user.id).all()
+                print(tabulate(
+                    [[s.id, s.name] for s in semes],
+                    headers=["ID", "Name",],
+                    tablefmt="rst"
+                ))
+
+            elif cmd.semester_cmd == "sync":
+                pass
 
 
