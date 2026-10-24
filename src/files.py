@@ -7,6 +7,9 @@ from database import DataBase
 from datetime import datetime
 from os import path
 
+from semesters import Semester
+
+
 class File(DataBase):
     __tablename__ = 'file'
 
@@ -31,7 +34,7 @@ class File(DataBase):
 
     @property
     def file_dir(self):
-        return path.abspath(path.join(self.course.user.sync_dir, sanitize_filename(self.course.effective_name, replacement_text="_"), sanitize_filename(self.subdir, replacement_text="_")))
+        return path.abspath(path.join(self.course.user.sync_dir, sanitize_filename(self.course.semester.name, replacement_text="_"), sanitize_filename(self.course.effective_name, replacement_text="_"), sanitize_filename(self.subdir, replacement_text="_")))
 
     @property
     def file_path(self):
