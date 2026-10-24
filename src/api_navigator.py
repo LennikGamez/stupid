@@ -43,7 +43,7 @@ class ApiNavigator:
     def _relate_course_object_and_semester(self, course_obj: dict, semester_id, session: dbSession):
         course_obj["semester_id"] = semester_id
 
-    def _get_semesters_in_db(self, session):
+    def _get_semesters_in_db(self, session) -> dict[str, int]:
         # extract all semester stud_ids from the database
         semesters_in_db = session.query(Semester).all()
         return {semester.stud_id: semester.id for semester in semesters_in_db}
@@ -109,8 +109,13 @@ class ApiNavigator:
        
             # insert courses
             try:
-                sql_stmt = insert(Course).values(courses).on_conflict_do_nothing(
+                sql_stmt = insert(Course).values(courses)
+                sql_stmt = sql_stmt.on_conflict_do_update(
                     index_elements=["user_id", "stud_id"],
+                    set_=dict(
+                        name=sql_stmt.excluded.name,
+                        semester_id=sql_stmt.excluded.semester_id,
+                    )
                 )
                 session.execute(sql_stmt)
                 session.commit()
@@ -121,6 +126,7 @@ class ApiNavigator:
             except Exception as e:
                 session.rollback()
                 logger.error(e)
+                logger.error(e.args)
 
         return True
 
