@@ -206,6 +206,7 @@ class CLI:
                 if cmd.here:
                     pwd = getcwd()
                     print(pwd)
+                    # TODO: implement this
                 else:
                     user = self.get_user()
 
