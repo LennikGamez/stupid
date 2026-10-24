@@ -1,5 +1,5 @@
 from sqlalchemy import ForeignKey, UniqueConstraint
-from typing import List
+from typing import List, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import DataBase
 
@@ -17,8 +17,8 @@ class Course(DataBase):
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     user: Mapped["User"] = relationship(back_populates="courses") # noqa
 
-    semester_id: Mapped[int | None] = mapped_column(ForeignKey("semester.id"))
-    semester: Mapped[Semester | None] = relationship(back_populates="courses") # noqa
+    semester_id: Mapped[Optional[int]] = mapped_column(ForeignKey("semester.id"))
+    semester: Mapped[Optional["Semester"]] = relationship(back_populates="courses") # noqa
 
     # make some combinations of attributes unique
     __table_args__ = (
