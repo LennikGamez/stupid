@@ -19,6 +19,7 @@ USER_INFO = path.join(API_VERSION, "users/me")
 ROOT_FOLDER_FOLDERS = lambda course_id: path.join(API_VERSION, f"courses/{course_id}/folders")
 FOLDER_LIST = lambda folder_id: path.join(API_VERSION, f"folders/{folder_id}")
 COURSE_LIST = lambda user_id: path.join(API_VERSION, f"users/{user_id}/courses")
+SEMESTER_LIST = path.join(API_VERSION, "semesters")
 
 def get_app_dir():
     debug_mode = env.get("DEBUG", default=True)

@@ -6,6 +6,7 @@ from os import path, makedirs
 from datetime import datetime
 
 from courses import Course
+from semesters import Semester
 from files import File
 from web_session_manager import WebSessionManager
 from constants import *
@@ -18,28 +19,95 @@ class ApiNavigator:
         self.wsm = wsm
         self.engine = engine
 
+    def fetch_semester_data(self):
+        semester_list = self.wsm.get(SEMESTER_LIST).json().get("data")
+
+        semesters = {semester.get("id"): {
+            "name": semester.get("attributes").get("title"),
+            "start": datetime.fromisoformat(semester.get("attributes").get("start")),
+            "end": datetime.fromisoformat(semester.get("attributes").get("end")),
+            "stud_id": semester.get("id"),
+            "current": semester.get("attributes").get("is-current"),
+            "user_id": self.wsm.user.id
+        } for semester in semester_list}
+
+        return semesters
+        
+
     def get_user_info_via_session_token(self):
         res = self.wsm.get(USER_INFO)
         json_data = res.json()
         return json_data.get("data").get("id") # stud_id
 
+
+    def _relate_course_object_and_semester(self, course_obj: dict, semester_id, session: dbSession):
+        course_obj["semester_id"] = semester_id
+
+    def _get_semesters_in_db(self, session):
+        # extract all semester stud_ids from the database
+        semesters_in_db = session.query(Semester).all()
+        return {semester.stud_id: semester.id for semester in semesters_in_db}
+
     def get_course_list_for_user(self):
         if self.wsm.user.stud_id is None:
             raise Exception("stud ID missing")
         res = self.wsm.get(COURSE_LIST(self.wsm.user.stud_id))
-        json_data = res.json().get("data")
+        course_api_data = res.json().get("data")
 
 
-        courses = [
-            {
-                "stud_id": c.get("id"),
-                "name": c.get("attributes").get("title"),
-                "user_id": self.wsm.user.id
-            }
-        for c in json_data]
-
-        
         with dbSession(self.engine) as session:
+            # prepare variable only fetch the actual data if at least one course requires it
+            semesters_endpoint_data = {}
+            # extract all semester stud_ids from the database
+            db_semester_stud_ids_ids = self._get_semesters_in_db(session)
+            courses = []
+            for course in course_api_data:
+
+                c = {
+                    "stud_id": course.get("id"),
+                    "name": course.get("attributes").get("title"),
+                    "user_id": self.wsm.user.id
+                }
+
+                
+                start_semester_stud_id = course.get("relationships").get("start-semester").get("data").get("id")
+                # check for each course if its start-semester is already in the database
+                if start_semester_stud_id in db_semester_stud_ids_ids.keys():
+                    # print("Semester is already known", start_semester_stud_id, ": ", db_semester_stud_ids[start_semester_stud_id])
+                    self._relate_course_object_and_semester(c, db_semester_stud_ids_ids[start_semester_stud_id], session)
+                else:
+                    if not semesters_endpoint_data:
+                        print("Fetching Semester list...")
+                        semesters_endpoint_data = self.fetch_semester_data()
+
+                    if not start_semester_stud_id in semesters_endpoint_data.keys():
+                        print("start semester does not exist")
+                        return
+
+                    # print("Inserting new Semester into database with stud_id: ", start_semester_stud_id)
+                    try:
+                        sql_stmt = insert(Semester).values(semesters_endpoint_data[start_semester_stud_id]).on_conflict_do_nothing(
+                            index_elements=["stud_id"],
+                        ).returning(Semester)
+                        session.execute(sql_stmt)
+                        session.commit()
+                        logger.info(
+                            f"Successfully inserted/updated 1 semester"
+                        )
+
+                    except Exception as e:
+                        session.rollback()
+                        logger.error(e)
+
+
+                    # get updated semester list
+                    db_semester_stud_ids_ids = self._get_semesters_in_db(session)
+                    self._relate_course_object_and_semester(c, db_semester_stud_ids_ids[start_semester_stud_id], session)
+
+                courses.append(c)
+                    
+       
+            # insert courses
             try:
                 sql_stmt = insert(Course).values(courses).on_conflict_do_nothing(
                     index_elements=["user_id", "stud_id"],
