@@ -108,7 +108,7 @@ class CLI:
                     f"Enter directory to sync to if empty defaults to {path.join(path.expanduser("~"), "stupid")}: ")
 
                 if sync_dir.strip() == "":
-                    sync_dir = path.join(path.expanduser("~"), "PiDuts")
+                    sync_dir = path.join(path.expanduser("~"), "stupid")
 
                 if not path.exists(path.abspath(path.join(sync_dir, pardir))):
                     raise ValueError("Directory does not exist")
