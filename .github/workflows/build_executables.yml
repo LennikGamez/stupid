@@ -18,8 +18,8 @@ jobs:
             artifact_name: stupid_macos.app
             asset_name: stupid_macos_${{github.ref_name}}.app
           - os: windows-latest
-            asset_name: stupid_windows.exe
-            artifact_name: stupid_windows_${{github.ref_name}}.exe
+            artifact_name: stupid_windows.exe
+            asset_name: stupid_windows_${{github.ref_name}}.exe
     steps:
       - name: Build ${{matrix.os}}
         uses: sayyid5416/pyinstaller@v1
@@ -34,6 +34,6 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ matrix.artifact_name }}
+          file: dist/${{ matrix.artifact_name }}
           asset_name: ${{ matrix.asset_name }}
           tag: ${{ github.ref }}
