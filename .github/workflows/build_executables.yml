@@ -12,13 +12,13 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_name: stupid_linux
+            artifact_name: stupid
             asset_name: stupid_linux_${{github.ref_name}}
           - os: macos-latest
-            artifact_name: stupid_macos.app
+            artifact_name: stupid
             asset_name: stupid_macos_${{github.ref_name}}.app
           - os: windows-latest
-            artifact_name: stupid_windows.exe
+            artifact_name: stupid.exe
             asset_name: stupid_windows_${{github.ref_name}}.exe
     steps:
       - name: Build ${{matrix.os}}
@@ -28,7 +28,7 @@ jobs:
           #pyinstaller_ver: '==5.13.2'
           spec: 'src/main.py'
           requirements: 'requirements.txt'
-          upload_exe_with_name: ${{matrix.artifact_name}}
+          upload_exe_with_name: ${{matrix.asset_name}}
           options: --onefile, --name "stupid", --console
       - name: Upload ${{matrix.os}}
         uses: svenstaro/upload-release-action@v2
