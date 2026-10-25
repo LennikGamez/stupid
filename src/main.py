@@ -1,6 +1,6 @@
 import logging
-from os import path
-
+from os import path, environ as env
+import sys
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, Engine
@@ -36,6 +36,13 @@ class Stupid:
     def run(self):
         """this method runs stupid"""
         logging.basicConfig(level=logging.INFO)
+
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            logger.info('running in a PyInstaller bundle')
+            env["DEBUG"] = env.get("DEBUG", "False")
+        else:
+            logger.info('running in a normal Python process')
+
         self.setup_db_and_run_migrations()
 
         cmd = CLI.parse_args()
