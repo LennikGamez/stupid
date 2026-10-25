@@ -20,7 +20,7 @@ jobs:
             asset_name: stupid_linux_${{github.ref_name}}
           - os: macos-latest
             artifact_name: stupid
-            asset_name: stupid_macos_${{github.ref_name}}.app
+            asset_name: stupid_macos_${{github.ref_name}}
           - os: windows-latest
             artifact_name: stupid.exe
             asset_name: stupid_windows_${{github.ref_name}}.exe
