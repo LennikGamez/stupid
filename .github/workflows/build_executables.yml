@@ -14,12 +14,15 @@ jobs:
           - os: ubuntu-latest
             artifact_name: stupid_linux
             asset_name: stupid_linux_${{github.ref_name}}
+            release_file: dist/stupid
           - os: macos-latest
             artifact_name: stupid_macos.app
             asset_name: stupid_macos_${{github.ref_name}}.app
+            release_file: dist/stupid
           - os: windows-latest
             asset_name: stupid_windows.exe
             artifact_name: stupid_windows_${{github.ref_name}}.exe
+            release_file: dist/stupid.exe
     steps:
       - name: Build ${{matrix.os}}
         uses: sayyid5416/pyinstaller@v1
@@ -34,6 +37,6 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/${{ matrix.artifact_name }}
+          file: ${{ matrix.release_file }}
           asset_name: ${{ matrix.asset_name }}
           tag: ${{ github.ref }}
