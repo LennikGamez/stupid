@@ -22,7 +22,7 @@ COURSE_LIST = lambda user_id: path.join(API_VERSION, f"users/{user_id}/courses")
 SEMESTER_LIST = path.join(API_VERSION, "semesters")
 
 def get_app_dir():
-    debug_mode = env.get("DEBUG", default=True)
+    debug_mode = env.get("DEBUG", default="True") == "True"
 
     pd_dir = user_data_dir(appname="pi_duts", appauthor="lennik") if not debug_mode else path.abspath(
         path.join(path.dirname(path.realpath(__file__)), pardir, ".data"))
