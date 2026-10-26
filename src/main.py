@@ -1,5 +1,5 @@
 import logging
-from os import path, environ as env
+from os import path, environ
 import sys
 from alembic import command
 from alembic.config import Config
@@ -39,7 +39,7 @@ class Stupid:
 
         if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
             logger.info('running in a PyInstaller bundle')
-            env["DEBUG"] = env.get("DEBUG", "False")
+            environ["DEBUG"] = environ.get("DEBUG", "False")
         else:
             logger.info('running in a normal Python process')
 
