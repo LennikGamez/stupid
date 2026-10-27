@@ -18,7 +18,7 @@ from web_session_manager import WebSessionManager
 logger = getLogger(__name__)
 
 class CLI:
-    def __init__(self, engine: Engine, cmd: Namespace):
+    def __init__(self, engine: Engine, cmd: Namespace) -> None:
         # database engine as attribute
         self.engine: Engine = engine
         self.cmd: Namespace = cmd
@@ -89,7 +89,7 @@ class CLI:
                     print(u.username)
 
             elif cmd.user_cmd == "add":
-                url = input("Enter url to studip instance (e.g. 'https://studip.example.com'): ")
+                url = input("Enter url to stud.ip instance (e.g. 'https://studip.example.com'): ")
                 url_parsed = urlparse(url)
 
                 # check if valid url was entered

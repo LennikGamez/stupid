@@ -21,10 +21,10 @@ FOLDER_LIST = lambda folder_id: path.join(API_VERSION, f"folders/{folder_id}")
 COURSE_LIST = lambda user_id: path.join(API_VERSION, f"users/{user_id}/courses")
 SEMESTER_LIST = path.join(API_VERSION, "semesters")
 
-def get_app_dir():
+def get_app_dir() -> str:
     debug_mode = env.get("DEBUG", default="True") == "True"
 
-    pd_dir = user_data_dir(appname="stupid", appauthor="lennik") if not debug_mode else path.abspath(
+    pd_dir: str = user_data_dir(appname="stupid", appauthor="lennik") if not debug_mode else path.abspath(
         path.join(path.dirname(path.realpath(__file__)), pardir, ".data"))
 
     makedirs(pd_dir, exist_ok=True)
@@ -34,7 +34,7 @@ def get_app_dir():
     return pd_dir
 
 
-def get_db_url():
+def get_db_url() -> str:
     """
     this static method returns the correct file path for the database.
     for development use DEBUG=True and the db is saved to /PROJECT_ROOT/.data
