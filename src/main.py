@@ -23,9 +23,9 @@ class Stupid:
         # run migrations and create db if not exist
         alembic_cfg = Config()
         alembic_cfg.set_main_option("sqlalchemy.url", url_db)
-        print(path.join(path.dirname(path.realpath(__file__)), "migrations"))
-        alembic_cfg.set_main_option("script_location",
-                                    path.join(path.dirname(path.realpath(__file__)), "migrations"))
+        mig_path = path.join(path.dirname(path.realpath(__file__)), "migrations")
+        logger.info(f"migrations path: {mig_path}")
+        alembic_cfg.set_main_option("script_location", mig_path)
 
         logger.info("----- running migrations -----")
         command.upgrade(alembic_cfg, "head")
