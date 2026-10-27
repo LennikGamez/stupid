@@ -15,15 +15,21 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             artifact_name: stupid
-            asset_name: stupid_linux_${{github.ref_name}}
+            asset_name: stupid_linux_x86_64_${{github.ref_name}}
+          - os: ubuntu-26.04-arm
+            artifact_name: stupid
+            asset_name: stupid_linux_arm64_${{github.ref_name}}
           - os: macos-latest
             artifact_name: stupid
-            asset_name: stupid_macos_${{github.ref_name}}
+            asset_name: stupid_macos_arm64_${{github.ref_name}}
           - os: windows-latest
             artifact_name: stupid.exe
-            asset_name: stupid_windows_${{github.ref_name}}.exe
+            asset_name: stupid_windows_x86_64_${{github.ref_name}}.exe
+          - os: windows-11-arm
+            artifact_name: stupid.exe
+            asset_name: stupid_windows_arm64_${{github.ref_name}}.exe
     steps:
       - name: Build ${{matrix.os}}
         uses: sayyid5416/pyinstaller@v1
