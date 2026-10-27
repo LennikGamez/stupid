@@ -24,7 +24,7 @@ SEMESTER_LIST = path.join(API_VERSION, "semesters")
 def get_app_dir():
     debug_mode = env.get("DEBUG", default="True") == "True"
 
-    pd_dir = user_data_dir(appname="pi_duts", appauthor="lennik") if not debug_mode else path.abspath(
+    pd_dir = user_data_dir(appname="stupid", appauthor="lennik") if not debug_mode else path.abspath(
         path.join(path.dirname(path.realpath(__file__)), pardir, ".data"))
 
     makedirs(pd_dir, exist_ok=True)

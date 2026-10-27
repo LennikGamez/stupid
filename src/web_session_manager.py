@@ -84,7 +84,7 @@ class WebSessionManager:
 
         res = self.post(EP_LOGIN, data={
              "loginname": self.user.username,
-             "password": keyring.get_password("pi_duts", str(self.user.id)),
+             "password": keyring.get_password("stupid", str(self.user.id)),
              "security_token": tk_sec,
              "login_ticket": tk_login,
              "resolution": "",
