@@ -1,4 +1,4 @@
-# pi.duts
+# stupid
 
 ## Feature Roadmap
 - [ ] authentication with direct login 
@@ -9,8 +9,8 @@
 
 ## DEVELOPEMENT INFO
 - for developing set `DEBUG=True` in your environment - for example with `export DEBUG=True`
-- to be able to prepare migrations, pi_duts has to be run at least once. prepare them with `alembic revision --autogenerate -m "MIGRATION NAME"`
-- when pi_duts starts, an automatic database migration is run
+- to be able to prepare migrations, stupid has to be run at least once. prepare them with `alembic revision --autogenerate -m "MIGRATION NAME"`
+- when stupid starts, an automatic database migration is run
 - API: [https://docs.gitlab.studip.de/entwicklung/jsonapi/start/](https://docs.gitlab.studip.de/entwicklung/jsonapi/start/)
 
 ## DISCLAIMER

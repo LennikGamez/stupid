@@ -124,8 +124,8 @@ class CLI:
                         session.refresh(user)
                         logger.info(f"Successfully added user {username}")
 
-                        keyring.set_password("pi_duts", str(user.id), password)
-                        check_pass = keyring.get_password("pi_duts", str(user.id))
+                        keyring.set_password("stupid", str(user.id), password)
+                        check_pass = keyring.get_password("stupid", str(user.id))
                         if check_pass == password:
                             logger.info("Password set successfully")
 
@@ -166,8 +166,8 @@ class CLI:
                         logger.info("user not found!")
                         exit(1)
 
-                keyring.set_password("pi_duts", str(user_id), password)
-                check_pass = keyring.get_password("pi_duts", str(user_id))
+                keyring.set_password("stupid", str(user_id), password)
+                check_pass = keyring.get_password("stupid", str(user_id))
                 if check_pass == password:
                     print("Password changed successfully")
 
