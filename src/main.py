@@ -35,12 +35,13 @@ class Stupid:
 
     def run(self):
         """this method runs stupid"""
-        logging.basicConfig(level=logging.INFO)
 
         if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            logging.basicConfig(level=logging.WARN)
             logger.info('running in a PyInstaller bundle')
             environ["DEBUG"] = environ.get("DEBUG", "False")
         else:
+            logging.basicConfig(level=logging.INFO)
             logger.info('running in a normal Python process')
 
         self.setup_db_and_run_migrations()
