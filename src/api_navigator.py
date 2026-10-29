@@ -225,6 +225,12 @@ class ApiNavigator:
 
         self._clone_folder(course, FOLDER_LIST(root_folder_id), root_dir=str(self.wsm.user.sync_dir), **kwargs)
 
+    def sync_files_by_semester(self, semester: Semester, **kwargs):
+        with dbSession(self.engine) as session:
+            courses_in_semester = session.query(Course).filter(Course.user_id == self.wsm.user.id).filter(Course.semester_id == semester.id).all()
+            for course in courses_in_semester:
+                self.sync_files_by_course(course, **kwargs)
+
     def sync_files(self, **kwargs):
         # get relevant courses
         sync_all_semesters = kwargs.get("sync_all_semesters", True)

@@ -1,3 +1,4 @@
+from pathvalidate import sanitize_filename
 from collections import defaultdict
 from argparse import ArgumentParser, Namespace
 from getpass import getpass
@@ -229,12 +230,45 @@ class CLI:
 
         elif cmd.cmd == "files":
             if cmd.file_cmd == "sync":
+                user = self.get_user()
                 if cmd.here:
+                    sync_dir = user.sync_dir
                     pwd = getcwd()
-                    print(pwd)
-                    # TODO: implement this
+
+                    if sync_dir == pwd:
+                        print("Syncing all your files...")
+                        with WebSessionManager(user) as wsm:
+                            nav = ApiNavigator(wsm, self.engine)
+                            nav.sync_files()
+                        exit()
+
+                    elif not path.commonpath([sync_dir, pwd]) == sync_dir:
+                        print("This directory is not inside your stupid folder")
+                        exit(1)
+
+                    directories = pwd.removeprefix(sync_dir+path.sep).split(path.sep)
+                    directories.reverse()
+
+                    for i in directories:
+                        with dbSession(self.engine) as session:
+                            user = self.get_user()
+                            course = session.query(Course).filter(Course.user_id == user.id).filter(Course.display_name == i or Course.name == i).first()
+                            if course:
+                                with WebSessionManager(user) as wsm:
+                                    nav = ApiNavigator(wsm, self.engine)
+                                    nav.sync_files_by_course(course)
+                                exit()
+                            semesters = session.query(Semester).filter(Semester.user_id == user.id).all()
+                            for semester in semesters:
+                                if sanitize_filename(semester.name, replacement_text="_") == i:
+                                    with WebSessionManager(user) as wsm:
+                                        nav = ApiNavigator(wsm, self.engine)
+                                        nav.sync_files_by_semester(semester)
+                                    exit()
+
+                    print("Could not match this folder: ", pwd)
+                    
                 else:
-                    user = self.get_user()
 
                     if cmd.all_courses:
                         with WebSessionManager(user) as session:
