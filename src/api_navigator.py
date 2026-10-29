@@ -227,8 +227,21 @@ class ApiNavigator:
 
     def sync_files(self, **kwargs):
         # get relevant courses
+        sync_all_semesters = kwargs.get("sync_all_semesters", True)
+            
         with dbSession(self.engine) as session:
-            courses = session.query(Course).filter(Course.user_id == self.wsm.user.id).all()
+            if sync_all_semesters:
+                print("Syncing all Semesters...")
+                courses = session.query(Course).filter(Course.user_id == self.wsm.user.id).all()
+            else:
+                print("Syncing only current Semester")
+                current_semester_res = session.query(Semester).filter(Semester.current == True).first()
+                if not current_semester_res:
+                    raise Exception("No current Semester was found!")
+
+                current_semester = current_semester_res
+                courses = session.query(Course).filter(Course.user_id == self.wsm.user.id).filter(Course.semester_id == current_semester.id).all()
+                
 
         # sync every course
         for course in courses:

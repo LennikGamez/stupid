@@ -62,6 +62,7 @@ class CLI:
         parser_files.add_argument("file_cmd", choices=[None, "sync"], help="choose what to do with files")
         parser_files.add_argument("--all-courses", "-a", action="store_true", help="sync all courses")
         parser_files.add_argument("--courses", "-c", help="choose which courses to sync")
+        parser_files.add_argument("--all-semesters", "-as", action="store_true", help="sync all files of every semester")
         parser_files.add_argument("--here", action="store_true", help="try to updating files in current directory")
         parser_files.add_argument("--pre-gen-dirs", action="store_true", help="do not update any files just generate directories")
 
@@ -234,7 +235,7 @@ class CLI:
                     if cmd.all_courses:
                         with WebSessionManager(user) as session:
                             nav = ApiNavigator(session, self.engine)
-                            nav.sync_files(pre_gen_dir_no_file_download=cmd.pre_gen_dirs)
+                            nav.sync_files(pre_gen_dir_no_file_download=cmd.pre_gen_dirs, sync_all_semesters=cmd.all_semesters)
 
                     else:
                         if cmd.courses:
