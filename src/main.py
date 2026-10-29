@@ -56,4 +56,8 @@ class Stupid:
 
 
 if __name__ == '__main__':
-    Stupid().run()
+    try:
+        Stupid().run()
+    except KeyboardInterrupt:
+        print("\nBye!")
+    
