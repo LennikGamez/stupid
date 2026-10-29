@@ -62,7 +62,7 @@ class CLI:
         parser_files.add_argument("file_cmd", choices=[None, "sync"], help="choose what to do with files")
         parser_files.add_argument("--all-courses", "-a", action="store_true", help="sync all courses")
         parser_files.add_argument("--courses", "-c", help="choose which courses to sync")
-        parser_files.add_argument("--all-semesters", "-as", action="store_true", help="sync all files of every semester")
+        parser_files.add_argument("--all-semesters", "-s", action="store_true", help="if possible select not only your current semester but all semesters")
         parser_files.add_argument("--here", action="store_true", help="try to updating files in current directory")
         parser_files.add_argument("--pre-gen-dirs", action="store_true", help="do not update any files just generate directories")
 
@@ -77,6 +77,10 @@ class CLI:
 
 
         return parser.parse_args()
+
+    def get_current_semester(self) -> Semester | None:
+        with dbSession(self.engine) as session:
+            return session.query(Semester).filter(Semester.current == True).first()
 
     def get_user(self) -> User:
 
@@ -242,9 +246,21 @@ class CLI:
                             selected_c_ids = cmd.courses.split(",")
                         else:
                             print("Since you have entered any courses you have to select them manually: ")
+
                             with dbSession(self.engine) as session:
-                                all_courses = session.query(Course).filter(Course.user_id == user.id).order_by(
-                                    asc(Course.name)).all()
+                                get_all_semesters = cmd.all_semesters
+
+                                current_semester = self.get_current_semester()
+                                if not current_semester:
+                                    get_all_semesters = True
+
+                                if get_all_semesters:
+                                    all_courses = session.query(Course).filter(Course.user_id == user.id).order_by(asc(Course.name)).all()
+                                    print("Courses of all Semesters:")
+                                else:
+                                    print("Courses of your current Semester:")
+                                    all_courses = session.query(Course).filter(Course.user_id == user.id).filter(Course.semester_id == current_semester.id).order_by(asc(Course.name)).all()
+                                    
 
                                 print_course_select(all_courses)
 
