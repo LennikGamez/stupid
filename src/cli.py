@@ -1,3 +1,4 @@
+from collections import defaultdict
 from argparse import ArgumentParser, Namespace
 from getpass import getpass
 from logging import getLogger
@@ -16,6 +17,26 @@ from users import User
 from web_session_manager import WebSessionManager
 
 logger = getLogger(__name__)
+
+def print_course_select(all_courses):
+        
+        # group the courses by semester start
+        grouped = defaultdict(list)
+        for course in all_courses:
+            grouped[course.semester.start].append(course)
+
+        rows = []
+        for _semester_start, courses in sorted(grouped.items(), key = lambda g: g[0]): # sort by semester start
+            for course in courses:
+                rows.append([course.id, course.effective_name])
+            rows.append(["", ""])
+
+        print(tabulate(
+            rows,
+            headers=["ID", "Name",],
+            tablefmt="rst"
+        ))
+
 
 class CLI:
     def __init__(self, engine: Engine, cmd: Namespace) -> None:
@@ -223,11 +244,8 @@ class CLI:
                             with dbSession(self.engine) as session:
                                 all_courses = session.query(Course).filter(Course.user_id == user.id).order_by(
                                     asc(Course.name)).all()
-                                print(tabulate(
-                                    [[c.id, c.effective_name,] for c in all_courses],
-                                    headers=["ID", "Name",],
-                                    tablefmt="rst"
-                                ))
+
+                                print_course_select(all_courses)
 
                             selected_c_ids = input("Select comma separated course IDs to sync e.g. '1,4,7': ").split(",")
 
@@ -251,11 +269,7 @@ class CLI:
 
                 with dbSession(self.engine) as session:
                     all_courses = session.query(Course).filter(Course.user_id == user.id).order_by(asc(Course.name)).all()
-                    print(tabulate(
-                        [[c.id, c.effective_name,] for c in all_courses],
-                        headers=["ID", "Name",],
-                        tablefmt="rst"
-                    ))
+                    print_course_select(all_courses)
 
             if cmd.course_cmd == "sync":
                 user = self.get_user()
