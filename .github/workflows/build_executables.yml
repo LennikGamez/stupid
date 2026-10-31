@@ -18,23 +18,29 @@ jobs:
           - os: ubuntu-26.04
             artifact_name: stupid
             asset_name: stupid_linux_x86_64_${{github.ref_name}}
+            py_arch: x64
           - os: ubuntu-26.04-arm
             artifact_name: stupid
             asset_name: stupid_linux_arm64_${{github.ref_name}}
+            py_arch: arm64
           - os: macos-latest
             artifact_name: stupid
             asset_name: stupid_macos_arm64_${{github.ref_name}}
+            py_arch: arm64
           - os: windows-latest
             artifact_name: stupid.exe
             asset_name: stupid_windows_x86_64_${{github.ref_name}}.exe
+            py_arch: x64
           - os: windows-11-arm
             artifact_name: stupid.exe
             asset_name: stupid_windows_arm64_${{github.ref_name}}.exe
+            py_arch: arm64
     steps:
       - name: Build ${{matrix.os}}
         uses: sayyid5416/pyinstaller@v1
         with:
           python_ver: '3.14'
+          python_arch: ${{ matrix.py_arch }}
           #pyinstaller_ver: '==5.13.2'
           spec: 'stupid_onefile.spec'
           requirements: 'requirements.txt'
