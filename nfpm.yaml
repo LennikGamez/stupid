@@ -1,0 +1,50 @@
+# This is an example nfpm configuration file.
+# Make sure to check the documentation at https://nfpm.goreleaser.com
+#
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://nfpm.goreleaser.com/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+name: "stupid"
+arch: ${ARCH}
+platform: "linux"
+version: ${VERSION}
+section: "default"
+priority: "extra"
+maintainer: "aws1313 <69417093+aws1313@users.noreply.github.com>"
+description: |
+  cli client for certain stud.ip features
+vendor: "aws1313"
+homepage: "https://github.com/LennikGamez/stupid"
+license: "GPL-3.0"
+#changelog: "changelog.yml"
+contents:
+  - src: dist/main/
+    dst: /opt/stupid/
+    type: tree
+
+  - src: /opt/stupid/stupid
+    dst: /urs/bin/stupid
+    type: symlink
+
+  - src: LICENSE
+    dst: /usr/share/doc/stupid/copyright
+    packager: deb
+  - src: LICENSE
+    dst: /usr/share/licenses/stupid/LICENSE
+    packager: rpm
+
+  - src: LICENSE
+    dst: /usr/share/licenses/meinprojekt/LICENSE
+    packager: archlinux
+
+#overrides:
+#  rpm:
+#    scripts:
+#      preinstall: ./scripts/preinstall.sh
+#      postremove: ./scripts/postremove.sh
+# deb:
+#    scripts:
+#      postinstall: ./scripts/postinstall.sh
+#      preremove: ./scripts/preremove.sh

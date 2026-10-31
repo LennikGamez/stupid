@@ -1,0 +1,66 @@
+name: Build and upload linux packages
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version (e.g. 1.2.3)
+        required: true
+        type: string
+
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build_and_upload_packages:
+    name: build and upload linux distro packages
+    runs-on: ${{matrix.os}}
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            os: ubuntu-26.04
+          - arch: arm64
+            os: ubuntu-26.04-arm
+
+    steps:
+      - name: Build pyinstaller binary directory ${{matrix.os}}
+        uses: sayyid5416/pyinstaller@v1
+        with:
+          python_ver: '3.14'
+          #pyinstaller_ver: '==5.13.2'
+          spec: 'stupid_onedir.spec'
+          requirements: 'requirements.txt'
+      - name: install nfpm
+        run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+      - name: build packages
+        env:
+          VERSION_TAG: ${{ github.ref_name }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          export VERSION="${VERSION_TAG#v}"
+          nfpm package -p deb -t dist/
+          nfpm package -p rpm -t dist/
+          nfpm package -p archlinux -t dist/
+
+      - name: upload packages to forgejo
+        env:
+          TOKEN: ${{ secrets.PACKAGE_TOKEN }}
+          BASE: https://git.aws1313.de/api/packages/aws1313
+        run: |
+          set -euo pipefail
+          for f in dist/*.deb; do
+            curl -X PUT --fail --user "aws1313:$TOKEN" --upload-file "$f" "$BASE/debian/pool/stable/main/upload"
+          done
+          
+          for f in dist/*.rpm; do
+            curl -X PUT --fail --user "aws1313:$TOKEN" --upload-file "$f" "$BASE/rpm/upload"
+          done
+          
+          for f in dist/*.pkg.tar.zst; do
+            curl -X PUT "$BASE/arch/extras" --fail --user "aws1313:$TOKEN" --header "Content-Type: application/octet-stream" --data-binary "@$f" 
+          done
+          
