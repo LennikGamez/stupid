@@ -22,8 +22,11 @@ COURSE_LIST = lambda user_id: path.join(API_VERSION, f"users/{user_id}/courses")
 SEMESTER_LIST = path.join(API_VERSION, "semesters")
 
 def print_indent(string, indent: int):
-    symbol = "\u02ea" if indent > 0 else ""
-    print(' ' * indent, symbol, string)
+    # unicode = "\u02ea" # 
+    # unicode = "\u21aa" # ↪
+    unicode = "\u2937" # ⤷
+    print_symbol = unicode if indent > 0 else ""
+    print(' ' * indent, print_symbol, string)
 
 def get_app_dir() -> str:
     debug_mode = env.get("DEBUG", default="True") == "True"
