@@ -25,7 +25,7 @@ contents:
     type: tree
 
   - src: /opt/stupid/stupid
-    dst: /urs/bin/stupid
+    dst: /usr/bin/stupid
     type: symlink
 
   - src: LICENSE
@@ -36,7 +36,7 @@ contents:
     packager: rpm
 
   - src: LICENSE
-    dst: /usr/share/licenses/meinprojekt/LICENSE
+    dst: /usr/share/licenses/stupid/LICENSE
     packager: archlinux
 
 #overrides:
