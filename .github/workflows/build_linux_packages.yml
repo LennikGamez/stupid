@@ -23,14 +23,17 @@ jobs:
         include:
           - arch: amd64
             os: ubuntu-26.04
+            py_arch: x64
           - arch: arm64
             os: ubuntu-26.04-arm
+            py_arch: arm64
 
     steps:
       - name: Build pyinstaller binary directory ${{matrix.os}}
         uses: sayyid5416/pyinstaller@v1
         with:
           python_ver: '3.14'
+          python_arch: ${{ matrix.py_arch }}
           #pyinstaller_ver: '==5.13.2'
           spec: 'stupid_onedir.spec'
           requirements: 'requirements.txt'
