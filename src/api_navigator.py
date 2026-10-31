@@ -159,14 +159,17 @@ class ApiNavigator:
         files_data = self.wsm.get(url + "/file-refs").json().get("data")
         folders = self.wsm.get(url + "/folders").json().get("data")
 
+        if len(files_data) < 1 and len(folders) < 1:
+            # empty folder no need to print anything
+            return
         if path.basename(sub_dir):
             print_indent(path.basename(sub_dir), level)
-        if len(files_data) < 1 and len(folders) < 1:
-            print_indent("empty directory", level + 1)
 
         for folder in folders:
             name = folder.get("attributes").get("name")
             folder_id = folder.get("id")
+            if folder.get("attributes").get("is-empty"):
+                continue
             self._clone_folder(course, FOLDER_LIST(folder_id), root_dir=str(self.wsm.user.sync_dir), sub_dir=path.join(sub_dir, name), level = level + 1, **kwargs)
 
         # do DB updates/inserts first, then iterate over updated values. That way files can mark themselves
@@ -221,14 +224,19 @@ class ApiNavigator:
                 if downloaded:
                     print_indent(f"{file.name} has been downloaded!", level + 1)
                     downloaded_any_file = True
-            if not downloaded_any_file:
-                print_indent("no new files", level + 1)
+            # if not downloaded_any_file:
+                ## no new files no need to print anything
+                # print_indent("no new files", level + 1)
 
     def sync_files_by_course(self, course: Course, **kwargs):
         root_folder_res = self.wsm.get(ROOT_FOLDER_FOLDERS(course.stud_id))
-        if root_folder_res.json().get("data") is None:
-            print(f"{course.name} has no file system!")
+        root_json = root_folder_res.json()
+        if root_json.get("data") is None:
+            print(f"> {course.name} has no file system!")
             logger.info(f"{course.name} has no file system!")
+            return
+        elif root_json.get("data")[0].get("attributes").get("is-empty"):
+            print(f"> skipping course {course.effective_name} since it's empty")
             return
         root_folder_id = root_folder_res.json().get("data")[0].get("id")
 
