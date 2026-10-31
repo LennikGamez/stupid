@@ -39,7 +39,11 @@ jobs:
           spec: 'stupid_onedir.spec'
           requirements: 'requirements.txt'
       - name: install nfpm
-        run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+        run: |
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+          echo "$(go env GOBIN)"
+          echo "$(go env GOPATH)"
+          echo "$(go env GOBIN)" >> "$GITHUB_PATH"
       - name: build packages
         env:
           VERSION_TAG: ${{ github.ref_name }}
