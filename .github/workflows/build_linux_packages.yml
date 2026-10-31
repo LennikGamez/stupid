@@ -19,6 +19,7 @@ jobs:
     name: build and upload linux distro packages
     runs-on: ${{matrix.os}}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - arch: amd64
