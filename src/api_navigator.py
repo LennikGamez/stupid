@@ -161,6 +161,8 @@ class ApiNavigator:
 
         if path.basename(sub_dir):
             print_indent(path.basename(sub_dir), level)
+        if len(files_data) < 1 and len(folders) < 1:
+            print_indent("empty directory", level + 1)
 
         for folder in folders:
             name = folder.get("attributes").get("name")
@@ -213,9 +215,14 @@ class ApiNavigator:
                 raise Exception("File insertion failed!", e)
 
 
+            downloaded_any_file = False
             for file in res_files:
-                self._download_file(file, **kwargs)
-                print_indent(f"{file.name} has been downloaded!", level + 1)
+                downloaded = self._download_file(file, **kwargs)
+                if downloaded:
+                    print_indent(f"{file.name} has been downloaded!", level + 1)
+                    downloaded_any_file = True
+            if not downloaded_any_file:
+                print_indent("no new files", level + 1)
 
     def sync_files_by_course(self, course: Course, **kwargs):
         root_folder_res = self.wsm.get(ROOT_FOLDER_FOLDERS(course.stud_id))
