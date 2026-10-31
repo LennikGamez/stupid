@@ -155,14 +155,17 @@ class ApiNavigator:
 
         return False
         
-    def _clone_folder(self, course: Course, url: str, root_dir: str, sub_dir: str = "", **kwargs):
+    def _clone_folder(self, course: Course, url: str, root_dir: str, sub_dir: str = "", level=0, **kwargs):
         files_data = self.wsm.get(url + "/file-refs").json().get("data")
         folders = self.wsm.get(url + "/folders").json().get("data")
+
+        if path.basename(sub_dir):
+            print_indent(path.basename(sub_dir), level)
 
         for folder in folders:
             name = folder.get("attributes").get("name")
             folder_id = folder.get("id")
-            self._clone_folder(course, FOLDER_LIST(folder_id), root_dir=str(self.wsm.user.sync_dir), sub_dir=path.join(sub_dir, name), **kwargs)
+            self._clone_folder(course, FOLDER_LIST(folder_id), root_dir=str(self.wsm.user.sync_dir), sub_dir=path.join(sub_dir, name), level = level + 1, **kwargs)
 
         # do DB updates/inserts first, then iterate over updated values. That way files can mark themselves
         # as downloaded or e.g. update their name if the file exists twice
@@ -179,7 +182,6 @@ class ApiNavigator:
         ]
 
         if len(files) < 1:
-            print("no files in folder: ", path.join(course.name, sub_dir))
             return
         with dbSession(self.engine) as session:
             try:
@@ -213,7 +215,7 @@ class ApiNavigator:
 
             for file in res_files:
                 self._download_file(file, **kwargs)
-                print(f"{file.name} has been downloaded!")
+                print_indent(f"{file.name} has been downloaded!", level + 1)
 
     def sync_files_by_course(self, course: Course, **kwargs):
         root_folder_res = self.wsm.get(ROOT_FOLDER_FOLDERS(course.stud_id))
@@ -223,6 +225,7 @@ class ApiNavigator:
             return
         root_folder_id = root_folder_res.json().get("data")[0].get("id")
 
+        print("\n", course.effective_name)
         self._clone_folder(course, FOLDER_LIST(root_folder_id), root_dir=str(self.wsm.user.sync_dir), **kwargs)
 
     def sync_files_by_semester(self, semester: Semester, **kwargs):
