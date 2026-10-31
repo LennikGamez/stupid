@@ -162,8 +162,6 @@ class ApiNavigator:
         if len(files_data) < 1 and len(folders) < 1:
             # empty folder no need to print anything
             return
-        if path.basename(sub_dir):
-            print_indent(path.basename(sub_dir), level)
 
         for folder in folders:
             name = folder.get("attributes").get("name")
@@ -223,7 +221,13 @@ class ApiNavigator:
                 downloaded = self._download_file(file, **kwargs)
                 if downloaded:
                     print_indent(f"{file.name} has been downloaded!", level + 1)
+                    if not downloaded_any_file:
+                        if path.basename(sub_dir):
+                            print_indent(path.basename(sub_dir), level)
+
                     downloaded_any_file = True
+
+                        
             # if not downloaded_any_file:
                 ## no new files no need to print anything
                 # print_indent("no new files", level + 1)
