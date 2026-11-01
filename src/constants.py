@@ -16,7 +16,8 @@ EP_DOWNLOAD_NEWEST_FILES = "/dispatch.php/course/files/newest_files?cid="
 
 API_VERSION = "/jsonapi.php/v1"
 USER_INFO = path.join(API_VERSION, "users/me")
-ROOT_FOLDER_FOLDERS = lambda course_id: path.join(API_VERSION, f"courses/{course_id}/folders")
+ROOT_FOLDER_FOLDERS = lambda course_id, page_limit: path.join(API_VERSION, f"courses/{course_id}/folders?page[limit]={page_limit}")
+FILE_URL = lambda folder_id: path.join(API_VERSION, f"folders/{folder_id}/file-refs")
 FOLDER_LIST = lambda folder_id: path.join(API_VERSION, f"folders/{folder_id}")
 COURSE_LIST = lambda user_id: path.join(API_VERSION, f"users/{user_id}/courses")
 SEMESTER_LIST = path.join(API_VERSION, "semesters")
