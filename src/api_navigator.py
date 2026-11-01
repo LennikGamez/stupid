@@ -187,6 +187,7 @@ class ApiNavigator:
 
             while index < len(folders):
                 read_folder()
+            folder_id_subdir.update({all_folders_flat[0]["id"]: ""}) # add root folder so that files inside root can be matched
             return folder_id_subdir
 
         folder_list = get_folderids_and_subdirectory_paths(folders)
@@ -197,7 +198,7 @@ class ApiNavigator:
             {
                 "stud_id": f.get("id"),
                 "name": f.get("attributes").get("name"),
-                "subdir": folder_list[f.get("relationships").get("parent").get("data").get("id")],
+                "subdir": folder_list[f.get("relationships").get("parent").get("data").get("id")], # match subdir with prev generated folder_list
                 "course_id": course.id,
                 "chdate": datetime.fromisoformat(f.get("attributes").get("chdate")),
                 "download_url": f.get("meta").get("download-url"),
@@ -240,16 +241,26 @@ class ApiNavigator:
                 raise Exception("File insertion failed!", e)
 
 
-            downloaded_any_file = False
-            for file in res_files:
-                downloaded = self._download_file(file, **kwargs)
-                if downloaded:
-                    print_indent(f"{file.name} has been downloaded!", 0)
-                    if not downloaded_any_file:
-                        if path.basename(file.file_path):
-                            print_indent(path.basename(file.file_path), 0)
+            # group files and subdirectories
+            grouped = {}
+            for f in res_files:
+                if not f.subdir in grouped:
+                    grouped[f.subdir] = []
+                grouped[f.subdir] += [f]
 
-                    downloaded_any_file = True
+            for subdir, files in grouped.items():
+                level = get_path_level(subdir)
+                downloaded_any = True
+                for file in files:
+                    downloaded = self._download_file(file, **kwargs)
+                    if downloaded:
+                        if downloaded_any:
+                            # print subdir once
+                            if subdir:
+                                print_indent(subdir, level)
+                                level += 1
+                            downloaded_any = False
+                        print_indent(f"{file.name} has been downloaded!", level)
 
 
     def sync_files_by_course(self, course: Course, **kwargs):
