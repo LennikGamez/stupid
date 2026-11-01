@@ -30,6 +30,9 @@ def print_indent(string, indent: int):
     print_symbol = unicode if indent > 0 else ""
     print(' ' * indent, print_symbol, string)
 
+def get_path_level(p) -> int:
+    return len(path.split(p))
+
 def get_app_dir() -> str:
     debug_mode = env.get("DEBUG", default="True") == "True"
 
