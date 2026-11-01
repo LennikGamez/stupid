@@ -1,4 +1,5 @@
 import logging, json
+from typing import Generator
 from sqlalchemy.orm import Session as dbSession
 from sqlalchemy import Engine
 from sqlalchemy.dialects.sqlite import insert
@@ -155,34 +156,57 @@ class ApiNavigator:
 
         return False
         
-    def _clone_folder(self, course: Course, url: str, root_dir: str, sub_dir: str = "", level=0, **kwargs):
-        files_data = self.wsm.get(url + "/file-refs").json().get("data")
-        folders = self.wsm.get(url + "/folders").json().get("data")
+    def _clone_folder(self, course: Course, all_folders_flat, root_dir: str, **kwargs):
+        folders = [{
+            "id": f.get("id"),
+            "name": f.get("attributes").get("name"),
+            "file-url": f.get("relationships").get("file-refs").get("links").get("related"),
+            "folder-count": f.get("relationships").get("folders").get("meta").get("count"),
+            "file-count": f.get("relationships").get("file-refs").get("meta").get("count")
+            
+        } for f in all_folders_flat[1::]]
 
-        if len(files_data) < 1 and len(folders) < 1:
-            # empty folder no need to print anything
-            return
+        def get_folderids_and_subdirectory_paths(folders):
+            index = 0
+            folder_id_subdir = {}
 
-        for folder in folders:
-            name = folder.get("attributes").get("name")
-            folder_id = folder.get("id")
-            if folder.get("attributes").get("is-empty"):
-                continue
-            self._clone_folder(course, FOLDER_LIST(folder_id), root_dir=str(self.wsm.user.sync_dir), sub_dir=path.join(sub_dir, name), level = level + 1, **kwargs)
+            def read_folder(sub_dir_path="", level=0):
+                nonlocal index
+                if not index < len(folders):
+                    logger.error("not all folders were fetched (page limit too small)")
+                    return
+                folder = folders[index]
+                index += 1
+                sub_dir_path = path.join(sub_dir_path, folder["name"])
+                if folder["file-count"] > 0:
+                    folder_id_subdir.update({
+                                                folder["id"]: sub_dir_path
+                                            })
+                for _ in range(folder["folder-count"]):
+                    read_folder(sub_dir_path, level+1)
 
-        # do DB updates/inserts first, then iterate over updated values. That way files can mark themselves
-        # as downloaded or e.g. update their name if the file exists twice
+            while index < len(folders):
+                read_folder()
+            return folder_id_subdir
+
+        folder_list = get_folderids_and_subdirectory_paths(folders)
+
+        # fetch all files in the course and map them to folders in folder_list
+        course_files_flat = self.wsm.get(FILE_REFS_FLAT(course.stud_id, 1000000)).json().get("data")
         files = [
             {
                 "stud_id": f.get("id"),
                 "name": f.get("attributes").get("name"),
-                "subdir": sub_dir,
+                "subdir": folder_list[f.get("relationships").get("parent").get("data").get("id")],
                 "course_id": course.id,
                 "chdate": datetime.fromisoformat(f.get("attributes").get("chdate")),
                 "download_url": f.get("meta").get("download-url"),
             }
-            for f in files_data
+            for f in course_files_flat
         ]
+
+        # do DB updates/inserts first, then iterate over updated values. That way files can mark themselves
+        # as downloaded or e.g. update their name if the file exists twice
 
         if len(files) < 1:
             return
@@ -220,20 +244,16 @@ class ApiNavigator:
             for file in res_files:
                 downloaded = self._download_file(file, **kwargs)
                 if downloaded:
-                    print_indent(f"{file.name} has been downloaded!", level + 1)
+                    print_indent(f"{file.name} has been downloaded!", 0)
                     if not downloaded_any_file:
-                        if path.basename(sub_dir):
-                            print_indent(path.basename(sub_dir), level)
+                        if path.basename(file.file_path):
+                            print_indent(path.basename(file.file_path), 0)
 
                     downloaded_any_file = True
 
-                        
-            # if not downloaded_any_file:
-                ## no new files no need to print anything
-                # print_indent("no new files", level + 1)
 
     def sync_files_by_course(self, course: Course, **kwargs):
-        root_folder_res = self.wsm.get(ROOT_FOLDER_FOLDERS(course.stud_id))
+        root_folder_res = self.wsm.get(ROOT_FOLDER_FOLDERS(course.stud_id, 1000000))
         root_json = root_folder_res.json()
         if root_json.get("data") is None:
             print(f"> {course.name} has no file system!")
@@ -245,7 +265,7 @@ class ApiNavigator:
         root_folder_id = root_folder_res.json().get("data")[0].get("id")
 
         print("\n", course.effective_name)
-        self._clone_folder(course, FOLDER_LIST(root_folder_id), root_dir=str(self.wsm.user.sync_dir), **kwargs)
+        self._clone_folder(course, root_json.get("data"), root_dir=str(self.wsm.user.sync_dir), **kwargs)
 
     def sync_files_by_semester(self, semester: Semester, **kwargs):
         with dbSession(self.engine) as session:
