@@ -260,7 +260,7 @@ class ApiNavigator:
                                 print_indent(subdir, level)
                                 level += 1
                             downloaded_any = False
-                        print_indent(f"{file.name} has been downloaded!", level)
+                        print_indent(f"{file.name} \u2713", level)
 
 
     def sync_files_by_course(self, course: Course, **kwargs):
