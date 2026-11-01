@@ -257,10 +257,11 @@ class ApiNavigator:
                         if downloaded_any:
                             # print subdir once
                             if subdir:
-                                print_indent(subdir, level)
+                                print_indent(f"{subdir}{' \u2713' if "pre_gen_dir_no_file_download" in kwargs.keys() and kwargs["pre_gen_dir_no_file_download"] else ''}", level)
                                 level += 1
                             downloaded_any = False
-                        print_indent(f"{file.name} \u2713", level)
+                        if not "pre_gen_dir_no_file_download" in kwargs.keys() or not kwargs["pre_gen_dir_no_file_download"]:
+                            print_indent(f"{file.name} \u2713", level)
 
 
     def sync_files_by_course(self, course: Course, **kwargs):
