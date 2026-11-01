@@ -156,7 +156,7 @@ class ApiNavigator:
 
         return False
         
-    def _clone_folder(self, course: Course, all_folders_flat, root_dir: str, **kwargs):
+    def _clone_folder(self, course: Course, all_folders_flat, **kwargs):
         folders = [{
             "id": f.get("id"),
             "name": f.get("attributes").get("name"),
@@ -164,7 +164,7 @@ class ApiNavigator:
             "folder-count": f.get("relationships").get("folders").get("meta").get("count"),
             "file-count": f.get("relationships").get("file-refs").get("meta").get("count")
             
-        } for f in all_folders_flat[1::]]
+        } for f in all_folders_flat[1::]] # exclude the root directory so the subdir path does not get ugly
 
         def get_folderids_and_subdirectory_paths(folders):
             index = 0
@@ -273,10 +273,9 @@ class ApiNavigator:
         elif root_json.get("data")[0].get("attributes").get("is-empty"):
             print(f"> skipping course {course.effective_name} since it's empty")
             return
-        root_folder_id = root_folder_res.json().get("data")[0].get("id")
 
         print("\n", course.effective_name)
-        self._clone_folder(course, root_json.get("data"), root_dir=str(self.wsm.user.sync_dir), **kwargs)
+        self._clone_folder(course, root_json.get("data"), **kwargs)
 
     def sync_files_by_semester(self, semester: Semester, **kwargs):
         with dbSession(self.engine) as session:
