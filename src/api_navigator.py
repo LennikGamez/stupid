@@ -172,7 +172,7 @@ class ApiNavigator:
 
             def read_folder(sub_dir_path="", level=0):
                 nonlocal index
-                if not index < len(folders):
+                if not index <= len(folders):
                     logger.error("not all folders were fetched (page limit too small)")
                     return
                 folder = folders[index]
