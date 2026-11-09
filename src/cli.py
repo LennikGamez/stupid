@@ -4,6 +4,7 @@ from argparse import ArgumentParser, Namespace
 from getpass import getpass
 from logging import getLogger
 from os import path, pardir, makedirs, getcwd
+from sys import platform
 from urllib.parse import urlparse
 
 import keyring
@@ -105,6 +106,20 @@ class CLI:
 
         return user
 
+    @staticmethod
+    def get_keyring_pass(key: str) -> str | None:
+        if platform == "darwin":
+            logger.warning("MacOS keyring is not supported, using unsecure alternative")
+            return None
+        return keyring.get_password("stupid", key)
+
+    @staticmethod
+    def set_keyring_pass(key: str, val: str) -> None:
+        if platform == "darwin":
+            logger.warning("MacOS keyring is not supported, using unsecure alternative")
+            return
+        keyring.set_password("stupid", key, val)
+
     def run_cli(self):
         cmd = self.cmd
         if cmd.cmd == "users":
@@ -151,8 +166,8 @@ class CLI:
                         session.refresh(user)
                         logger.info(f"Successfully added user {username}")
 
-                        keyring.set_password("stupid", str(user.id), password)
-                        check_pass = keyring.get_password("stupid", str(user.id))
+                        CLI.set_keyring_pass(str(user.id), password)
+                        check_pass = CLI.get_keyring_pass(str(user.id))
                         if check_pass == password:
                             logger.info("Password set successfully")
 
@@ -193,8 +208,8 @@ class CLI:
                         logger.info("user not found!")
                         exit(1)
 
-                keyring.set_password("stupid", str(user_id), password)
-                check_pass = keyring.get_password("stupid", str(user_id))
+                CLI.set_keyring_pass(str(user_id), password)
+                check_pass = CLI.get_keyring_pass(str(user_id))
                 if check_pass == password:
                     print("Password changed successfully")
 
