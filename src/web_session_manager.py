@@ -1,5 +1,4 @@
-from os import path
-from logging import getLogger
+from sys import platform
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 import requests as r
@@ -18,6 +17,14 @@ class WebSessionManager:
         self.session = r.session()
         self.session_file = path.join(self.app_dir, f"session_user_{self.user.id}.pickle")
         self.ensure_login = ensure_login
+
+    # TODO: we need a common or utils file
+    @staticmethod
+    def get_keyring_pass(key: str) -> str | None:
+        if platform == "darwin":
+            logger.warning("MacOS keyring is not supported, using unsecure alternative")
+            return None
+        return keyring.get_password("stupid", key)
 
 
     def _save_cookies(self):
@@ -84,7 +91,7 @@ class WebSessionManager:
 
         res = self.post(EP_LOGIN, data={
              "loginname": self.user.username,
-             "password": keyring.get_password("stupid", str(self.user.id)),
+             "password": WebSessionManager.get_keyring_pass(str(self.user.id)),
              "security_token": tk_sec,
              "login_ticket": tk_login,
              "resolution": "",
