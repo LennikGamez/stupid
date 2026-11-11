@@ -3,7 +3,7 @@ from collections import defaultdict
 from argparse import ArgumentParser, Namespace
 from getpass import getpass
 from logging import getLogger
-from os import path, pardir, makedirs, getcwd
+from os import path, pardir, makedirs, getcwd, environ as env
 from sys import platform
 from urllib.parse import urlparse
 
@@ -108,14 +108,14 @@ class CLI:
 
     @staticmethod
     def get_keyring_pass(key: str) -> str | None:
-        if platform == "darwin":
+        if platform == "darwin" and not env.get("DEBUG", default="True") == "True":
             logger.warning("MacOS keyring is not supported, using unsecure alternative")
             return None
         return keyring.get_password("stupid", key)
 
     @staticmethod
     def set_keyring_pass(key: str, val: str) -> None:
-        if platform == "darwin":
+        if platform == "darwin" and not env.get("DEBUG", default="True") == "True":
             logger.warning("MacOS keyring is not supported, using unsecure alternative")
             return
         keyring.set_password("stupid", key, val)

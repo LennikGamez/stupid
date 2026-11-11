@@ -21,7 +21,7 @@ class WebSessionManager:
     # TODO: we need a common or utils file
     @staticmethod
     def get_keyring_pass(key: str) -> str | None:
-        if platform == "darwin":
+        if platform == "darwin" and not env.get("DEBUG", default="True") == "True":
             logger.warning("MacOS keyring is not supported, using unsecure alternative")
             return None
         return keyring.get_password("stupid", key)
