@@ -23,8 +23,9 @@ class File(DataBase):
     course: Mapped["Course"] = relationship(back_populates="files") # noqa
 
     chdate: Mapped[datetime] = mapped_column(default=datetime.now())
+    last_download_dt: Mapped[datetime | None] = mapped_column()
 
-    downloaded: Mapped[bool] = mapped_column(default=False)
+    # downloaded: Mapped[bool] = mapped_column(default=False)
     download_url: Mapped[str | None] = mapped_column()
 
     # make some combinations of attributes unique
