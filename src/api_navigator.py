@@ -146,6 +146,7 @@ class ApiNavigator:
                         f.write(response.content)
 
                     with dbSession(self.engine) as session:
+                        session.merge(file)
                         file.downloaded = True
                         session.commit()
 
