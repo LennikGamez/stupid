@@ -132,28 +132,30 @@ class ApiNavigator:
         return True
 
     def _download_file(self, file: File, **kwargs) -> bool:
-        if not file.downloaded and not path.exists(file.file_path):
-            try:
-                if not path.exists(file.file_dir):
-                    makedirs(file.file_dir)
+        if not (not file.last_download_dt or file.last_download_dt < file.chdate or not path.exists(file.file_path)):
+            return False # file does not need to be downloaded
 
-                if not "pre_gen_dir_no_file_download" in kwargs.keys() or not kwargs["pre_gen_dir_no_file_download"]:
+        try:
+            if not path.exists(file.file_dir):
+                makedirs(file.file_dir)
 
-                    response = self.wsm.get(file.download_url)
+            if not "pre_gen_dir_no_file_download" in kwargs.keys() or not kwargs["pre_gen_dir_no_file_download"]:
+
+                response = self.wsm.get(file.download_url)
 
 
-                    with open(file.file_path, "wb") as f:
-                        f.write(response.content)
+                with open(file.file_path, "wb") as f:
+                    f.write(response.content)
 
-                    with dbSession(self.engine) as session:
-                        session.merge(file)
-                        file.downloaded = True
-                        session.commit()
+                with dbSession(self.engine) as session:
+                    file.last_download_dt = file.chdate
+                    session.merge(file)
+                    session.commit()
 
-                return True
+            return True
 
-            except Exception as e:
-                logger.error(e)
+        except Exception as e:
+            logger.error(e)
 
         return False
         
