@@ -163,6 +163,7 @@ class ApiNavigator:
             "name": f.get("attributes").get("name"),
             "file-url": f.get("relationships").get("file-refs").get("links").get("related"),
             "folder-count": f.get("relationships").get("folders").get("meta").get("count"),
+            "parent-id": f.get("relationships").get("parent", {"data": {"id": ""}}).get("data").get("id"),
             "file-count": f.get("relationships").get("file-refs").get("meta").get("count")
             
         } for f in all_folders_flat[1::]] # exclude the root directory so the subdir path does not get ugly
@@ -171,24 +172,14 @@ class ApiNavigator:
             index = 0
             folder_id_subdir = {}
 
-            def read_folder(sub_dir_path="", level=0):
-                nonlocal index
-                if not index <= len(folders):
-                    logger.error("not all folders were fetched (page limit too small)")
-                    return
-                folder = folders[index]
-                index += 1
-                sub_dir_path = path.join(sub_dir_path, folder["name"])
-                if folder["file-count"] > 0:
-                    folder_id_subdir.update({
-                                                folder["id"]: sub_dir_path
-                                            })
-                for _ in range(folder["folder-count"]):
-                    read_folder(sub_dir_path, level+1)
+            for folder in folders:
+                parent_subidr = folder_id_subdir.get(folder["parent-id"], "")
+                folder_id_subdir.update({folder["id"] : path.join(parent_subidr, folder["name"])})
 
-            while index < len(folders):
-                read_folder()
-            folder_id_subdir.update({all_folders_flat[0]["id"]: ""}) # add root folder so that files inside root can be matched
+            folder_id_subdir.update({all_folders_flat[0]["id"]: ""}) # add root folder so that later files inside root can be matched
+
+
+            print(json.dumps(folder_id_subdir, indent=4, ensure_ascii=False))
             return folder_id_subdir
 
         folder_list = get_folderids_and_subdirectory_paths(folders)
