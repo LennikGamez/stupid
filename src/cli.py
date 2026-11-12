@@ -14,6 +14,7 @@ from tabulate import tabulate
 
 from api_navigator import ApiNavigator
 from courses import Course
+from secrets_fallback import SecretsFallback
 from semesters import Semester
 from users import User
 from web_session_manager import WebSessionManager
@@ -106,17 +107,25 @@ class CLI:
 
         return user
 
-    @staticmethod
-    def get_keyring_pass(key: str) -> str | None:
+
+    def get_keyring_pass(self, key: str) -> str | None:
         if platform == "darwin" and not env.get("DEBUG", default="True") == "True":
             logger.warning("MacOS keyring is not supported, using unsecure alternative")
+            with dbSession(self.engine) as session:
+                res = session.query(SecretsFallback).filter(SecretsFallback.id == key).first()
+                if res:
+                    return res.value
             return None
         return keyring.get_password("stupid", key)
 
-    @staticmethod
-    def set_keyring_pass(key: str, val: str) -> None:
+
+    def set_keyring_pass(self, key: str, val: str) -> None:
         if platform == "darwin" and not env.get("DEBUG", default="True") == "True":
             logger.warning("MacOS keyring is not supported, using unsecure alternative")
+            with dbSession(self.engine) as session:
+                fb = SecretsFallback(id=key, value=val)
+                session.add(fb)
+                session.commit()
             return
         keyring.set_password("stupid", key, val)
 
@@ -166,13 +175,13 @@ class CLI:
                         session.refresh(user)
                         logger.info(f"Successfully added user {username}")
 
-                        CLI.set_keyring_pass(str(user.id), password)
-                        check_pass = CLI.get_keyring_pass(str(user.id))
+                        self.set_keyring_pass(str(user.id), password)
+                        check_pass = self.get_keyring_pass(str(user.id))
                         if check_pass == password:
                             logger.info("Password set successfully")
 
                         # login and get stud_id for user
-                        with WebSessionManager(user) as wsm:
+                        with WebSessionManager(user, self.get_keyring_pass(str(user.id))) as wsm:
                             nav = ApiNavigator(wsm, self.engine)
                             user.stud_id = nav.get_user_info_via_session_token()
                         logger.info(user.stud_id)
@@ -208,8 +217,8 @@ class CLI:
                         logger.info("user not found!")
                         exit(1)
 
-                CLI.set_keyring_pass(str(user_id), password)
-                check_pass = CLI.get_keyring_pass(str(user_id))
+                self.set_keyring_pass(str(user_id), password)
+                check_pass = self.get_keyring_pass(str(user_id))
                 if check_pass == password:
                     print("Password changed successfully")
 
@@ -219,7 +228,7 @@ class CLI:
             elif cmd.user_cmd == "check_login":
                 user = self.get_user()
 
-                with WebSessionManager(user) as session:
+                with WebSessionManager(user, self.get_keyring_pass(str(user.id))) as session:
                     session._show_cookies()
                     # nav = Navigator(self.engine, session, user)
 
@@ -252,7 +261,7 @@ class CLI:
 
                     if sync_dir == pwd:
                         print("Syncing all your files...")
-                        with WebSessionManager(user) as wsm:
+                        with WebSessionManager(user, self.get_keyring_pass(str(user.id))) as wsm:
                             nav = ApiNavigator(wsm, self.engine)
                             nav.sync_files()
                         exit()
@@ -269,14 +278,14 @@ class CLI:
                             user = self.get_user()
                             course = session.query(Course).filter(Course.user_id == user.id).filter(Course.display_name == i or Course.name == i).first()
                             if course:
-                                with WebSessionManager(user) as wsm:
+                                with WebSessionManager(user, self.get_keyring_pass(str(user.id))) as wsm:
                                     nav = ApiNavigator(wsm, self.engine)
                                     nav.sync_files_by_course(course)
                                 exit()
                             semesters = session.query(Semester).filter(Semester.user_id == user.id).all()
                             for semester in semesters:
                                 if sanitize_filename(semester.name, replacement_text="_") == i:
-                                    with WebSessionManager(user) as wsm:
+                                    with WebSessionManager(user, self.get_keyring_pass(str(user.id))) as wsm:
                                         nav = ApiNavigator(wsm, self.engine)
                                         nav.sync_files_by_semester(semester)
                                     exit()
@@ -286,7 +295,7 @@ class CLI:
                 else:
 
                     if cmd.all_courses:
-                        with WebSessionManager(user) as session:
+                        with WebSessionManager(user, self.get_keyring_pass(str(user.id))) as session:
                             nav = ApiNavigator(session, self.engine)
                             nav.sync_files(pre_gen_dir_no_file_download=cmd.pre_gen_dirs, sync_all_semesters=cmd.all_semesters)
 
@@ -318,7 +327,7 @@ class CLI:
                         with dbSession(self.engine) as session:
                             selected_courses = session.query(Course).filter(Course.id.in_(selected_c_ids)).all()
 
-                        with WebSessionManager(user) as session:
+                        with WebSessionManager(user, self.get_keyring_pass(str(user.id))) as session:
                             nav = ApiNavigator(session, self.engine)
                             for c in selected_courses:
                                 nav.sync_files_by_course(c, pre_gen_dir_no_file_download=cmd.pre_gen_dirs)
@@ -340,7 +349,7 @@ class CLI:
             if cmd.course_cmd == "sync":
                 user = self.get_user()
 
-                with WebSessionManager(user) as session:
+                with WebSessionManager(user, self.get_keyring_pass(str(user.id))) as session:
                     nav = ApiNavigator(session, self.engine)
                     nav.get_course_list_for_user()
 
