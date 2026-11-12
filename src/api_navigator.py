@@ -157,7 +157,7 @@ class ApiNavigator:
         except Exception as e:
             logger.error(e)
 
-        return False
+            return False
         
     def _clone_folder(self, course: Course, all_folders_flat, **kwargs):
         folders = [{
@@ -170,21 +170,14 @@ class ApiNavigator:
             
         } for f in all_folders_flat[1::]] # exclude the root directory so the subdir path does not get ugly
 
-        def get_folderids_and_subdirectory_paths(folders):
-            index = 0
-            folder_id_subdir = {}
+        ## generate folderid: subdirectory dictionary
+        folder_list = {}
 
-            for folder in folders:
-                parent_subidr = folder_id_subdir.get(folder["parent-id"], "")
-                folder_id_subdir.update({folder["id"] : path.join(parent_subidr, folder["name"])})
+        for folder in folders:
+            parent_subidr = folder_list.get(folder["parent-id"], "")
+            folder_list.update({folder["id"] : path.join(parent_subidr, folder["name"])})
 
-            folder_id_subdir.update({all_folders_flat[0]["id"]: ""}) # add root folder so that later files inside root can be matched
-
-
-            print(json.dumps(folder_id_subdir, indent=4, ensure_ascii=False))
-            return folder_id_subdir
-
-        folder_list = get_folderids_and_subdirectory_paths(folders)
+        folder_list.update({all_folders_flat[0]["id"]: ""}) # add root folder so that later files inside root can be matched
 
         # fetch all files in the course and map them to folders in folder_list
         course_files_flat = self.wsm.get(FILE_REFS_FLAT(course.stud_id, 1000000)).json().get("data")
