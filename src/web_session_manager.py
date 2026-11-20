@@ -5,7 +5,7 @@ import requests as r
 from bs4 import BeautifulSoup
 
 from constants import *
-from users import User
+from models.users import User
 
 logger = getLogger(__name__)
 

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from database import DataBase
+from models.database import DataBase
 
 class Semester(DataBase):
     __tablename__ = 'semester'

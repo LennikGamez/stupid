@@ -1,7 +1,7 @@
 from sqlalchemy import ForeignKey, UniqueConstraint
 from typing import List, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from database import DataBase
+from models.database import DataBase
 
 class Course(DataBase):
     __tablename__ = 'course'

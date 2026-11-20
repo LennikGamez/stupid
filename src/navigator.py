@@ -3,16 +3,15 @@ import logging
 import json
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
-from os import makedirs, path
 from datetime import datetime ,timezone
 
 from sqlalchemy import Engine
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session as dbSession
 
-from courses import Course
-from users import User
-from files import File
+from models.courses import Course
+from models.users import User
+from models.files import File
 from web_session_manager import WebSessionManager
 from constants import *
 

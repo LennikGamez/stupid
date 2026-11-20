@@ -1,14 +1,12 @@
-import logging, json
-from typing import Generator
+import logging
 from sqlalchemy.orm import Session as dbSession
 from sqlalchemy import Engine
 from sqlalchemy.dialects.sqlite import insert
-from os import path, makedirs
 from datetime import datetime
 
-from courses import Course
-from semesters import Semester
-from files import File
+from models.courses import Course
+from models.semesters import Semester
+from models.files import File
 from web_session_manager import WebSessionManager
 from constants import *
 

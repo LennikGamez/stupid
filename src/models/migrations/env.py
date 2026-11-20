@@ -2,13 +2,13 @@ from logging.config import fileConfig
 from sqlalchemy import  create_engine
 from alembic import context
 
-from database import DataBase
-from files import File
-from announcements import Announcement
-from courses import Course
-from secrets_fallback import SecretsFallback
-from semesters import Semester
-from users import User
+from models.database import DataBase
+from models.files import File
+from models.announcements import Announcement
+from models.courses import Course
+from models.secrets_fallback import SecretsFallback
+from models.semesters import Semester
+from models.users import User
 
 __all__ = [DataBase, File, Announcement, User, Course, Semester, SecretsFallback]
 

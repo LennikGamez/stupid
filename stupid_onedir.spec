@@ -6,13 +6,13 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('src/migrations/env.py', 'migrations'),
-        ('src/migrations/versions/*', 'migrations/versions'),
+        ('src/models/migrations/env.py', 'models/migrations'),
+        ('src/models/migrations/versions/*', 'models/migrations/versions'),
         ('src/alembic.ini', '.')
     ],
     hiddenimports=[
         'alembic', 'alembic.config', 'appdirs', 'sqlalchemy',
-        'sqlalchemy.ext.declarative', 'sqlalchemy.orm', 'logging.config', 'migrations.env'
+        'sqlalchemy.ext.declarative', 'sqlalchemy.orm', 'logging.config', 'models.migrations.env'
     ],
     hookspath=[],
     hooksconfig={},

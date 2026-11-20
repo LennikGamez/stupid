@@ -12,10 +12,10 @@ from sqlalchemy.orm import Session as dbSession
 from tabulate import tabulate
 
 from api_navigator import ApiNavigator
-from courses import Course
-from secrets_fallback import SecretsFallback
-from semesters import Semester
-from users import User
+from models.courses import Course
+from models.secrets_fallback import SecretsFallback
+from models.semesters import Semester
+from models.users import User
 from web_session_manager import WebSessionManager
 
 logger = getLogger(__name__)

@@ -23,7 +23,7 @@ class Stupid:
         # run migrations and create db if not exist
         alembic_cfg = Config()
         alembic_cfg.set_main_option("sqlalchemy.url", url_db)
-        mig_path = path.join(path.dirname(path.realpath(__file__)), "migrations")
+        mig_path = path.join(path.dirname(path.realpath(__file__)), "models/migrations")
         logger.info(f"migrations path: {mig_path}")
         alembic_cfg.set_main_option("script_location", mig_path)
 
@@ -37,9 +37,15 @@ class Stupid:
         """this method runs stupid"""
 
         if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-            logging.basicConfig(level=logging.WARN)
+            is_debug = environ.get("DEBUG", "False")
+            environ["DEBUG"] = is_debug
+
+            if is_debug == "True":
+                logging.basicConfig(level=logging.DEBUG)
+            else:
+                logging.basicConfig(level=logging.WARN)
+
             logger.info('running in a PyInstaller bundle')
-            environ["DEBUG"] = environ.get("DEBUG", "False")
         else:
             logging.basicConfig(level=logging.INFO)
             logger.info('running in a normal Python process')

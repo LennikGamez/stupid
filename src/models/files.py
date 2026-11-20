@@ -2,12 +2,10 @@ from pathvalidate import sanitize_filename, sanitize_filepath
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from courses import Course
-from database import DataBase
+from models.courses import Course
+from models.database import DataBase
 from datetime import datetime
 from os import path
-
-from semesters import Semester
 
 
 class File(DataBase):

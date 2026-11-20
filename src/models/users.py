@@ -1,8 +1,7 @@
-from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List
-from database import DataBase
-from semesters import Semester
+from models.database import DataBase
+from models.semesters import Semester
 
 
 class User(DataBase):
