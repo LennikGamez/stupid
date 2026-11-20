@@ -11,7 +11,7 @@ a = Analysis(
         ('src/alembic.ini', '.')
     ],
     hiddenimports=[
-        'alembic', 'alembic.config', 'appdirs', 'sqlalchemy',
+        'alembic', 'alembic.config', 'platformdirs', 'sqlalchemy',
         'sqlalchemy.ext.declarative', 'sqlalchemy.orm', 'logging.config', 'models.migrations.env'
     ],
     hookspath=[],
