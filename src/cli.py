@@ -3,8 +3,7 @@ from collections import defaultdict
 from argparse import ArgumentParser, Namespace
 from getpass import getpass
 from logging import getLogger
-from os import path, pardir, makedirs, getcwd, environ as env
-from sys import platform
+from os import path, pardir, makedirs, getcwd
 from urllib.parse import urlparse
 
 import keyring
@@ -109,25 +108,31 @@ class CLI:
 
 
     def get_keyring_pass(self, key: str) -> str | None:
-        if platform == "darwin" and not env.get("DEBUG", default="True") == "True":
-            logger.warning("MacOS keyring is not supported, using unsecure alternative")
+        pw = None
+        try:
+            pw = keyring.get_password("stupid", key)
+        except:
+            logger.warning("keyring not supported or unavailable, using unsecure alternative")
             with dbSession(self.engine) as session:
                 res = session.query(SecretsFallback).filter(SecretsFallback.id == key).first()
                 if res:
-                    return res.value
-            return None
-        return keyring.get_password("stupid", key)
+                    pw = res.value
+
+        if not pw:
+            logger.error("No password found, please set one with 'stupid users change_password'")
+
+        return pw
 
 
     def set_keyring_pass(self, key: str, val: str) -> None:
-        if platform == "darwin" and not env.get("DEBUG", default="True") == "True":
-            logger.warning("MacOS keyring is not supported, using unsecure alternative")
+        try:
+            keyring.set_password("stupid", key, val)
+        except:
+            logger.warning("keyring not supported or unavailable, using unsecure alternative")
             with dbSession(self.engine) as session:
                 fb = SecretsFallback(id=key, value=val)
                 session.add(fb)
                 session.commit()
-            return
-        keyring.set_password("stupid", key, val)
 
     def run_cli(self):
         cmd = self.cmd
