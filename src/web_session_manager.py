@@ -1,11 +1,10 @@
-from sys import platform
-from urllib.parse import urljoin
-from bs4 import BeautifulSoup
-import requests as r
 import pickle
-import keyring
-from constants import *
+from urllib.parse import urljoin
 
+import requests as r
+from bs4 import BeautifulSoup
+
+from constants import *
 from users import User
 
 logger = getLogger(__name__)
@@ -19,29 +18,33 @@ class WebSessionManager:
         self.session_file = path.join(self.app_dir, f"session_user_{self.user.id}.pickle")
         self.ensure_login = ensure_login
 
-    def _save_cookies(self):
+    def __save_cookies(self):
         with open(self.session_file, "wb") as f:
             pickle.dump(self.session.cookies, f)
 
-    def _show_cookies(self):
+    def __show_cookies(self):
         for c in self.session.cookies:
             print(f"{c.name}: {c.value}, {c.expires}")
 
-    def _load_cookies(self):
+    def __load_cookies(self):
         if path.exists(self.session_file):
             with open(self.session_file, "rb") as f:
                 self.session.cookies.update(pickle.load(f))
 
 
     def __enter__(self):
-        self._load_cookies()
+        self.__load_cookies()
+
+        if not self.user_password:
+            raise ValueError("No password provided")
+
         if not self.check_if_logged_in():
             self.session_login()
 
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._save_cookies()
+        self.__save_cookies()
 
     def get(self, endpoint, use_base_url = True, base_url: str="",) -> r.Response:
         if base_url == "": base_url = self.user.base_url
@@ -51,7 +54,7 @@ class WebSessionManager:
     def post(self, endpoint, data=None) -> r.Response:
         return self.session.post(urljoin(str(self.user.base_url), endpoint), data)
 
-    def _extract_sec_token_from_loginpage(self) -> tuple[bool, tuple[str, str]]:
+    def __extract_sec_token_from_loginpage(self) -> tuple[bool, tuple[str, str]]:
         res = self.get(EP_LOGIN).content
         bs = BeautifulSoup(res, "html.parser")
 
@@ -77,7 +80,7 @@ class WebSessionManager:
 
     def session_login(self) -> bool:
         
-        tk_success, (tk_sec, tk_login) = tk_success, (tk_sec, tk_login) = self._extract_sec_token_from_loginpage()
+        tk_success, (tk_sec, tk_login) = tk_success, (tk_sec, tk_login) = self.__extract_sec_token_from_loginpage()
 
         if not tk_success: return False
 
@@ -94,7 +97,7 @@ class WebSessionManager:
 
         # save session cookies
         # TODO: idk ob die von requests automatisch in self.session.cookies landen, falls ja:
-        self._save_cookies()
+        self.__save_cookies()
 
 
         return True
