@@ -1,5 +1,5 @@
 # general
-appdirs>=1.4.4
+platformdirs>=4.14.8
 tabulate>=0.10.0
 pathvalidate>=3.3.1
 
@@ -8,7 +8,7 @@ requests>=2.34.2
 beautifulsoup4>=4.15.0
 
 # database
-sqlalchemy>=2.1.6
+sqlalchemy>=2.1.9
 alembic>=1.20.1
 
 # securely save passwords

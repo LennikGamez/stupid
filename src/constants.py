@@ -1,7 +1,7 @@
 from logging import getLogger
 from os import environ as env
 from os import path, makedirs, pardir
-from appdirs import user_data_dir
+from platformdirs import user_data_dir
 
 logger = getLogger(__name__)
 
