@@ -176,7 +176,7 @@ class CLI:
                 with dbSession(self.engine) as session:
                     try:
                         session.add(user)
-                        session.commit()
+                        session.flush() # using flush here, we need user.id but do not want to commit, because get stud_id can fail
                         session.refresh(user)
                         logger.info(f"Successfully added user {username}")
 
