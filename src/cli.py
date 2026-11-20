@@ -177,22 +177,21 @@ class CLI:
                     try:
                         session.add(user)
                         session.flush() # using flush here, we need user.id but do not want to commit, because get stud_id can fail
-                        session.refresh(user)
                         logger.info(f"Successfully added user {username}")
 
-                        self.set_keyring_pass(str(user.id), password)
-                        check_pass = self.get_keyring_pass(str(user.id))
-                        if check_pass == password:
-                            logger.info("Password set successfully")
-
                         # login and get stud_id for user
-                        with WebSessionManager(user, self.get_keyring_pass(str(user.id))) as wsm:
+                        with WebSessionManager(user, password) as wsm:
                             nav = ApiNavigator(wsm, self.engine)
                             user.stud_id = nav.get_user_info_via_session_token()
                         logger.info(user.stud_id)
 
                         session.commit()
                         session.refresh(user)
+                        # now setting password so it is not orphaned on fail of stud_id
+                        self.set_keyring_pass(str(user.id), password)
+                        check_pass = self.get_keyring_pass(str(user.id))
+                        if check_pass == password:
+                            logger.info("Password set successfully")
                     except Exception as e:
                         session.rollback()
                         logger.error(e)
