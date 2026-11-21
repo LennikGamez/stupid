@@ -1,0 +1,76 @@
+name: update_brew_tap.yml
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  update_brew_tap:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: stupid
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+          architecture: arm64
+      - env:
+          VERSION_TAG: ${{ github.ref_name }}
+        working-directory:
+          stupid
+        run: |
+          export VERSION="${VERSION_TAG#v}"
+          pip install uv
+          uv init --bare
+          uv add -r requirements.txt
+          uv version "$VERSION"
+          uv build --sdist
+      - name: upload packages to forgejo
+        working-directory:
+          stupid
+        env:
+          TOKEN: ${{ secrets.PACKAGE_TOKEN }}
+          BASE: https://git.aws1313.de/api/packages/aws1313
+          VERSION_TAG: ${{ github.ref_name }}
+        run: |
+          export VERSION="${VERSION_TAG#v}"
+          set -euo pipefail
+          curl -X PUT --fail --user "aws1313:$TOKEN" --upload-file "dist/stupid-$VERSION.tar.gz" "$BASE/generic/stupid/$VERSION/stupid-$VERSION.tar.gz"
+      - name: wait some seconds so forgejo has time
+        run: |
+          sleep 20
+
+      - uses: actions/checkout@v7
+        with:
+          path: tap
+          token: ${{ secrets.TAP_TOKEN }}
+          repository: aws1313/homebrew-tap
+
+      - working-directory: tap
+        env:
+          TOKEN: ${{ secrets.PACKAGE_TOKEN }}
+          BASE: https://git.aws1313.de/api/packages/aws1313
+          VERSION_TAG: ${{ github.ref_name }}
+        run: |
+          export VERSION="${VERSION_TAG#v}"
+          export FILESUM=$(shasum -a 256 ../stupid/dist/stupid-$VERSION.tar.gz |awk '{print $1}')
+          awk '!done && sub(/url "https:\/\/git\.aws1313\.de\/[^"]*"/, "url \"https://git.aws1313.de/api/packages/aws1313/generic/stupid/$VERSION/stupid-$VERSION.tar.gz\"") { done=1 } 1' Formula/stupid.rb > temp.txt && mv temp.txt Formula/stupid.rb
+          awk '!done && sub(/sha256 "[^"]*"/, "sha256 \"$FILESUM\"") { done=1 } 1' Formula/stupid.rb > temp.txt && mv temp.txt Formula/stupid.rb
+          brew update-python-resources Formula/stupid.rb
+          cat Formula/stupid.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/stupid.rb
+          git commit -m "generated"
+          git push
+
+          
+        
+      
+
