@@ -35,6 +35,8 @@ class ApiNavigator:
 
     def get_user_info_via_session_token(self):
         res = self.wsm.get(USER_INFO)
+        if res.status_code == 401:
+            raise Exception("The studip login failed! Please check your login credentials and try again")
         json_data = res.json()
         return json_data.get("data").get("id") # stud_id
 
