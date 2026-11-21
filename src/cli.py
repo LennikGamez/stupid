@@ -62,10 +62,10 @@ class CLI:
         # file parser
         parser_files = subparsers.add_parser("files", help="Get file info")
         parser_files.add_argument("file_cmd", choices=[None, "sync"], help="choose what to do with files")
-        parser_files.add_argument("--all-courses", "-a", action="store_true", help="sync all courses")
-        parser_files.add_argument("--courses", "-c", help="choose which courses to sync")
+        parser_files.add_argument("--all-courses", "-a", action="store_true", help="sync the files of all courses that are in the selected semesters (defaults to the current semester refer to -s for more)")
+        parser_files.add_argument("--courses", "-c", help="choose which courses to sync, you need to provide the course id's with commas seperated")
         parser_files.add_argument("--all-semesters", "-s", action="store_true", help="if possible select not only your current semester but all semesters")
-        parser_files.add_argument("--here", action="store_true", help="try to updating files in current directory")
+        parser_files.add_argument("--here", action="store_true", help="try to update files in the current directory")
         parser_files.add_argument("--pre-gen-dirs", action="store_true", help="do not update any files just generate directories")
 
         # course parser
@@ -348,7 +348,6 @@ class CLI:
             headers=["ID", "Name",],
             tablefmt="rst"
         ))
-
     def semesters_sync(self):
         pass
         
