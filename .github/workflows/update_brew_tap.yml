@@ -27,9 +27,11 @@ jobs:
         run: |
           export VERSION="${VERSION_TAG#v}"
           pip install uv
+          pip install uvbrew
           uv init --bare
           uv add -r requirements.txt
           uv version "$VERSION"
+          uvbrew > stupid.rb
           uv build --sdist
       - name: upload packages to forgejo
         working-directory:
@@ -44,7 +46,7 @@ jobs:
           curl -X PUT --fail --user "aws1313:$TOKEN" --upload-file "dist/stupid-$VERSION.tar.gz" "$BASE/generic/stupid/$VERSION/stupid-$VERSION.tar.gz"
       - name: wait some seconds so forgejo has time
         run: |
-          sleep 20
+          sleep 20s
 
       - uses: actions/checkout@v7
         with:
@@ -58,11 +60,11 @@ jobs:
           BASE: https://git.aws1313.de/api/packages/aws1313
           VERSION_TAG: ${{ github.ref_name }}
         run: |
+          mv ../stupid/stupid.rb Formula/stupid.rb
           export VERSION="${VERSION_TAG#v}"
           export FILESUM=$(shasum -a 256 ../stupid/dist/stupid-$VERSION.tar.gz |awk '{print $1}')
           awk '!done && sub(/url "https:\/\/git\.aws1313\.de\/[^"]*"/, "url \"https://git.aws1313.de/api/packages/aws1313/generic/stupid/$VERSION/stupid-$VERSION.tar.gz\"") { done=1 } 1' Formula/stupid.rb > temp.txt && mv temp.txt Formula/stupid.rb
           awk '!done && sub(/sha256 "[^"]*"/, "sha256 \"$FILESUM\"") { done=1 } 1' Formula/stupid.rb > temp.txt && mv temp.txt Formula/stupid.rb
-          brew update-python-resources Formula/stupid.rb
           cat Formula/stupid.rb
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
