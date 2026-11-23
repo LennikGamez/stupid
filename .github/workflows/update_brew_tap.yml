@@ -65,6 +65,8 @@ jobs:
           export FILESUM=$(shasum -a 256 ../stupid/dist/stupid-$VERSION.tar.gz |awk '{print $1}')
           awk -v version="$VERSION" '!done && sub(/url "file:[^"]*"/, "url \"https://git.aws1313.de/api/packages/aws1313/generic/stupid/"version"/stupid-"version".tar.gz\"") { done=1 } 1' Formula/stupid.rb > temp.txt && mv temp.txt Formula/stupid.rb
           awk -v filesum="$FILESUM" '!done && sub(/sha256 "[^"]*"/, "sha256 \""filesum"\"\n  desc \"a CLI and tray client for certain features of stud.ip\"\n  homepage \"https://github.com/LennikGamez/stupid\"\n  license \"GPL-3.0\"") { done=1 } 1' Formula/stupid.rb > temp.txt && mv temp.txt Formula/stupid.rb
+          awk '/^  resource "(cryptography|cffi|pycparser|secretstorage|jeepney|pywin32-ctypes)" do$/{s=1;next} s&&/^  end$/{s=0;b=1;next} s{next} b&&/^$/{b=0;next} {b=0;print}' Formula/stupid.rb > temp.txt && mv temp.txt Formula/stupid.rb
+          awk '/^  def install$/{i=1;print "  def install\n    virtualenv_install_with_resources\n\n    (bin/\"stupid\").write <<~EOS\n      #!/bin/bash\n      export STUPID_HOMEBREW=1\n      exec \"#{libexec}/bin/python\" -m main \"$@\"\n    EOS\n    (bin/\"stupid\").chmod 0755\n  end";next} i&&/^  end$/{i=0;next} i{next} {print}' Formula/stupid.rb > temp.txt && mv temp.txt Formula/stupid.rb
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/stupid.rb
