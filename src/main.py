@@ -46,6 +46,18 @@ class Stupid:
                 logging.basicConfig(level=logging.WARN)
 
             logger.info('running in a PyInstaller bundle')
+
+        elif environ.get("STUPID_HOMEBREW", default="0") == "1":
+            is_debug = environ.get("DEBUG", "False")
+            environ["DEBUG"] = is_debug
+
+            if is_debug == "True":
+                logging.basicConfig(level=logging.DEBUG)
+            else:
+                logging.basicConfig(level=logging.WARN)
+
+            logger.info('running in a homebrew environment on macos')
+
         else:
             logging.basicConfig(level=logging.INFO)
             logger.info('running in a normal Python process')
