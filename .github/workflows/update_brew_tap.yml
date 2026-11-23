@@ -70,7 +70,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/stupid.rb
-          git commit -m "generated"
+          git commit -m "update tap to $VERSION_TAG"
           git push
 
           
