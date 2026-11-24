@@ -2,7 +2,7 @@
 a CLI client for certain features of stud.ip
 ## Install
 ### bundled ("binaries")
-With every release, we offer a bundled version of stupid for Windows, macOS and Linux. You can download the executables for your device here: [https://github.com/LennikGamez/stupid/releases/latest](https://github.com/LennikGamez/stupid/releases/latest).
+With every release, we offer a bundled version of stupid for Windows, Linux and macOS (not recommended). You can download the executables for your device here: [https://github.com/LennikGamez/stupid/releases/latest](https://github.com/LennikGamez/stupid/releases/latest).
 
 ### Linux packages
 The common way to install an application on Linux is by using a package manager.
@@ -12,7 +12,7 @@ We provide packages for Debian- and Red Hat-based distributions, as well as Arch
 Simply select the package for your packaging system and follow the instructions provided.
 
 ### MacOS
-Distributing for MacOS is a little bit complicated if you are not willing to pay 100€ a year. 
+Distributing for macOS can be a little bit complicated if you are not willing to pay 100€ a year. 
 
 We decided to go with a `homebrew tap`, which is kind of a third-party repository for homebrew.
 
