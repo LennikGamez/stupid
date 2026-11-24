@@ -10,6 +10,19 @@ The common way to install an application on Linux is by using a package manager.
 We provide packages for Debian- and Red Hat-based distributions, as well as Arch Linux, on our Forgejo instance: [https://git.aws1313.de/aws1313/stupid/packages](https://git.aws1313.de/aws1313/stupid/packages).
 
 Simply select the package for your packaging system and follow the instructions provided.
+
+### MacOS
+Distributing for MacOS is a little bit complicated if you are not willing to pay 100€ a year. 
+
+We decided to go with a `homebrew tap`, which is kind of a third-party repository for homebrew.
+
+You can install stupid by running `brew install aws1313/tap/stupid`.
+
+The corresponding repository can be found here: [https://github.com/aws1313/homebrew-tap](https://github.com/aws1313/homebrew-tap)
+
+> [!Note]
+> Stupid uses the system keychain to store your password safely, please grant permission when asked.
+
 ## Feature Roadmap
 - [ ] authentication with direct login 
 - [ ] get current courses, sync announcements and make them available via RSS
