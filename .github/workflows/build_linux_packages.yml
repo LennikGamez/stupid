@@ -38,10 +38,15 @@ jobs:
           #pyinstaller_ver: '==5.13.2'
           spec: 'stupid_onedir.spec'
           requirements: 'requirements.txt'
+
+      - name: fetch licenses
+        run: pip-licenses  --format=html --with-license-file --no-license-path --output-file=LICENSES.html --ignore-packages=pyobjc-core --with-authors --with-urls
+
       - name: install nfpm
         run: |
           go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
       - name: build packages
         env:
           VERSION_TAG: ${{ github.ref_name }}

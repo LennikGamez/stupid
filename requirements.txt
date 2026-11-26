@@ -2,6 +2,7 @@
 platformdirs>=4.14.8
 tabulate>=0.10.0
 pathvalidate>=3.3.1
+pip-licenses>=5.5.5
 
 # web requests
 requests>=2.34.2
